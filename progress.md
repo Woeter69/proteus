@@ -22,6 +22,9 @@
 - [x] **Helper Utilities**:
     - [x] Created and refined `run.sh` for one-command execution.
 - [x] **Documentation**: Created comprehensive `README.md`.
+- [x] **Project Management**:
+    - [x] Established `GEMINI.md` for long-term project memory.
+    - [x] Defined Core UX Principles (Optionality & User First).
 
 ## System Details
 - **OS**: Linux
