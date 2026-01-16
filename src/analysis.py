@@ -21,6 +21,8 @@ def analyze_results(log_path: Path):
     if not log_path.exists():
         print(f"Error: Log file {log_path} not found.")
         return None
+        
+    print(f"[*] Parsing log file: {log_path.name}")
 
     rg_values = []
     
