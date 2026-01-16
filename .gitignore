@@ -4,3 +4,13 @@ __pycache__/
 output/
 .ipynb_checkpoints/
 *.log
+
+# Backend
+backend/__pycache__/
+backend/venv/
+backend/.env
+
+# Frontend
+web/node_modules/
+web/.next/
+web/.env*.local

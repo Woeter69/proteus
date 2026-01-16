@@ -7,6 +7,9 @@ dependencies:
   - rdkit
   - numpy
   - lammps
+  - fastapi
+  - uvicorn
+  - python-multipart
   - pip
   - pip:
     - ovito
