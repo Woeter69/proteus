@@ -2,7 +2,7 @@
 
 **Proteus** is a computational research pipeline designed to simulate the self-assembly and nanoprecipitation of polymer chains. By automating the transition from chemical text (SMILES) to physical simulation (Molecular Dynamics), it allows researchers to rapidly screen and analyze polymer folding behaviors.
 
-## 🚀 Features
+## Features
 
 *   **Text-to-Structure**: Instantly converts SMILES strings into 3D molecular geometries with explicit hydrogens.
 *   **Automated Topology**: Generates LAMMPS-compliant data files with generic force field parameters (Lennard-Jones).
@@ -10,7 +10,7 @@
 *   **Built-in Analytics**: Automatically parses simulation logs to calculate the final Radius of Gyration ($R_g$).
 *   **Automated Visualization**: Uses **Ovito** to render high-quality, color-coded GIF animations of the simulation.
 
-## 🛠️ Installation
+## Installation
 
 Proteus uses **Conda** to manage dependencies (Python, RDKit, LAMMPS, NumPy).
 
@@ -30,7 +30,7 @@ Proteus uses **Conda** to manage dependencies (Python, RDKit, LAMMPS, NumPy).
     pip install ovito
     ```
 
-## 💻 Usage
+## Usage
 
 The easiest way to run the pipeline is using the `run.sh` helper script.
 
@@ -47,7 +47,7 @@ chmod +x run.sh
 *   `NAME`: The folder name for your results in `output/`.
 *   `STEPS`: (Optional) Simulation duration. Default is 10,000.
 
-## 📂 Output
+## Output
 
 Results are saved in `output/<NAME>/`:
 
@@ -57,16 +57,16 @@ Results are saved in `output/<NAME>/`:
 *   `simulation.log`: Raw simulation data (energies, temperatures).
 *   `trajectory.dump`: Raw atom positions (viewable in external tools like VMD/Ovito).
 
-## 🏗️ Architecture
+## Architecture
 
 1.  **Topology Architect (`topology.py`)**: SMILES $\to$ 3D Topology via RDKit & UFF.
 2.  **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity for smooth motion.
 3.  **Analytics (`analysis.py`)**: Log parsing and $R_g$ calculation.
 4.  **Visualization (`visualization.py`)**: Headless rendering of trajectories via Ovito.
 
-## 🧪 Simulation Physics
+## Simulation Physics
 
 The simulation uses a **Generic Hydrophobic Interaction** model:
-*   **Force Field**: Lennard-Jones (epsilon=0.105, sigma=2.5 $).
+*   **Force Field**: Lennard-Jones (epsilon=0.105, sigma=2.5).
 *   **Solvent**: Implicit solvent via Langevin thermostat.
 *   **Viscosity**: Tuned damping for realistic drifting rather than high-frequency vibrations.
