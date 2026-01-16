@@ -53,6 +53,8 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 10.0):
     atoms = mol.GetAtoms()
     bonds = mol.GetBonds()
     
+    print(f"[*] Molecule generated with {len(atoms)} atoms and {len(bonds)} bonds.")
+
     # Map elements to LAMMPS types
     # Simple mapping: C=1, H=2, O=3, N=4, others sequential
     element_map = {'C': 1, 'H': 2, 'O': 3, 'N': 4}
