@@ -27,7 +27,7 @@ def analyze_results(log_path: Path):
     rg_values = []
     
     try:
-        with open(log_path, 'r') as f:
+        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
             lines = f.readlines()
             
         # Find the thermo data section

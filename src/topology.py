@@ -28,22 +28,37 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 10.0):
     
     mol = Chem.AddHs(mol)
     
-    # 2. 3D Embedding
-    params = AllChem.ETKDG()
-    params.randomSeed = 42
-    status = AllChem.EmbedMolecule(mol, params)
+    # 2. 3D Embedding (Improved for long chains)
+    # Using direct kwargs for maximum compatibility across RDKit versions
+    print(f"[*] Attempting 3D embedding (max 5000 attempts)...")
+    
+    # Try with robust settings
+    status = AllChem.EmbedMolecule(
+        mol, 
+        randomSeed=42, 
+        maxAttempts=5000, 
+        useRandomCoords=True
+    )
     
     if status != 0:
-        print("Error: RDKit failed to embed molecule in 3D.")
-        # Try one more time with random coords
-        status = AllChem.EmbedMolecule(mol, useRandomCoords=True)
+        print("Warning: Standard embedding failed. Retrying with loose constraints...")
+        # Fallback: try without random coords or just more attempts
+        status = AllChem.EmbedMolecule(
+            mol, 
+            randomSeed=42, 
+            maxAttempts=10000,
+            useRandomCoords=True,
+            clearConfs=True
+        )
+        
         if status != 0:
-            print("Critical Error: Could not generate 3D coordinates.")
+            print("Critical Error: RDKit could not fold this polymer in 3D.")
+            print("Tip: Try a shorter chain or check if the SMILES is valid.")
             sys.exit(1)
 
     # Optimize geometry slightly to prevent severe clashes
     try:
-        AllChem.UFFOptimizeMolecule(mol)
+        AllChem.UFFOptimizeMolecule(mol, maxIters=200)
     except Exception as e:
         print(f"Warning: UFF Optimization failed ({e}), proceeding with raw coords.")
 

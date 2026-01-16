@@ -8,3 +8,5 @@ dependencies:
   - numpy
   - lammps
   - pip
+  - pip:
+    - ovito

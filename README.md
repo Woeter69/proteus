@@ -6,9 +6,9 @@
 
 *   **Text-to-Structure**: Instantly converts SMILES strings into 3D molecular geometries with explicit hydrogens.
 *   **Automated Topology**: Generates LAMMPS-compliant data files with generic force field parameters (Lennard-Jones).
-*   **Physics Engine**: Runs implicit solvent simulations using Langevin dynamics to model polymer collapse.
+*   **Physics Engine**: Runs implicit solvent simulations using Langevin dynamics with optimized viscosity for realistic molecular drifting.
 *   **Built-in Analytics**: Automatically parses simulation logs to calculate the final Radius of Gyration ($R_g$).
-*   **Modular Design**: Clean separation of topology generation, simulation, and analysis.
+*   **Automated Visualization**: Uses **Ovito** to render high-quality, color-coded GIF animations of the simulation.
 
 ## 🛠️ Installation
 
@@ -25,60 +25,48 @@ Proteus uses **Conda** to manage dependencies (Python, RDKit, LAMMPS, NumPy).
     conda env create -f environment.yml
     ```
 
-3.  **Activate the environment:**
+3.  **Install Visualization Engine (Optional but Recommended):**
     ```bash
-    conda activate proteus_env
+    pip install ovito
     ```
 
 ## 💻 Usage
 
-Run the pipeline using the central `main.py` controller. You can specify the polymer structure, simulation name, and duration.
+The easiest way to run the pipeline is using the `run.sh` helper script.
 
-### Basic Command
+### Using the Helper Script
 ```bash
-python main.py --smiles "CCOCCOCCO" --name "PEO_Oligomer" --steps 10000
+chmod +x run.sh
+./run.sh "<SMILES>" "<NAME>" [STEPS]
 ```
+*   **Example (3-unit PEO)**: `./run.sh "CCOCCOCCO" "PEO_3" 10000`
+*   **Example (Multi-chain)**: `./run.sh "CCO.CCO.CCO" "Triple_Chain" 10000`
 
 ### Arguments
-*   `--smiles`: (Required) The SMILES string of the polymer (e.g., `CCO` for PEG monomer).
-*   `--name`: (Optional) Name of the simulation run. Output will be saved to `output/<name>/`. Default: `simulation`.
-*   `--steps`: (Optional) Number of simulation steps to run. Default: `10000`.
+*   `SMILES`: The chemical structure. Use a dot `.` to separate independent molecules.
+*   `NAME`: The folder name for your results in `output/`.
+*   `STEPS`: (Optional) Simulation duration. Default is 10,000.
 
 ## 📂 Output
 
-Results are saved in the `output/` directory, organized by simulation name.
+Results are saved in `output/<NAME>/`:
 
-```text
-output/
-└── PEO_Oligomer/
-    ├── polymer.data       # LAMMPS topology file (3D structure)
-    ├── simulation.in      # LAMMPS input script
-    ├── simulation.log     # Raw simulation logs
-    └── trajectory.dump    # Atom trajectories (view in VMD/Ovito)
-```
+*   `animation.gif`: **High-quality video** of the simulation (color-coded by molecule).
+*   `polymer.data`: LAMMPS topology file (3D structure).
+*   `simulation.in`: The generated LAMMPS input script.
+*   `simulation.log`: Raw simulation data (energies, temperatures).
+*   `trajectory.dump`: Raw atom positions (viewable in external tools like VMD/Ovito).
 
 ## 🏗️ Architecture
 
-The codebase is split into four specialized modules within `src/`:
+1.  **Topology Architect (`topology.py`)**: SMILES $\to$ 3D Topology via RDKit & UFF.
+2.  **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity for smooth motion.
+3.  **Analytics (`analysis.py`)**: Log parsing and $R_g$ calculation.
+4.  **Visualization (`visualization.py`)**: Headless rendering of trajectories via Ovito.
 
-1.  **Topology Architect (`topology.py`)**:
-    *   Uses **RDKit** to embed SMILES strings into 3D space.
-    *   Applies UFF optimization to relax geometry.
-    *   Assigns generic masses and atom types.
+## 🧪 Simulation Physics
 
-2.  **Simulation Engine (`simulation.py`)**:
-    *   Constructs the LAMMPS input file.
-    *   Configures Langevin thermostat (300K) and generic hydrophobic interactions.
-    *   Executes `lmp` (LAMMPS) as a subprocess.
-
-3.  **Analytics (`analysis.py`)**:
-    *   Parses thermodynamic output from logs.
-    *   Extracts the Radius of Gyration ($R_g$) to quantify compactness.
-
-4.  **Controller (`main.py`)**:
-    *   CLI entry point that orchestrates the data flow between modules.
-
-## ⚠️ Limitations
-
-*   **Force Field**: Uses a generic "one-size-fits-all" Lennard-Jones potential. For high-accuracy chemical properties, a specific force field (like OPLS-AA or CHARMM) implementation is required.
-*   **Solvent**: Uses an implicit solvent model (Langevin dynamics), which approximates solvent effects via friction and random force, rather than explicit water molecules.
+The simulation uses a **Generic Hydrophobic Interaction** model:
+*   **Force Field**: Lennard-Jones ($ \epsilon=0.105, \sigma=2.5 $).
+*   **Solvent**: Implicit solvent via Langevin thermostat.
+*   **Viscosity**: Tuned damping for realistic drifting rather than high-frequency vibrations.
