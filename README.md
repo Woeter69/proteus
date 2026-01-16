@@ -82,3 +82,7 @@ The codebase is split into four specialized modules within `src/`:
 
 *   **Force Field**: Uses a generic "one-size-fits-all" Lennard-Jones potential. For high-accuracy chemical properties, a specific force field (like OPLS-AA or CHARMM) implementation is required.
 *   **Solvent**: Uses an implicit solvent model (Langevin dynamics), which approximates solvent effects via friction and random force, rather than explicit water molecules.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
