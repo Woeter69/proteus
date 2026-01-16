@@ -15,6 +15,7 @@ def generate_input_file(
 ):
     """
     Writes the simulation.in file for LAMMPS.
+    Uses Langevin dynamics for implicit solvent simulation.
     """
     
     # Generic Parameters
