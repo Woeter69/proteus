@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--smiles", type=str, required=True, help="SMILES string of the polymer")
     parser.add_argument("--name", type=str, default="simulation", help="Name of the simulation run")
     parser.add_argument("--steps", type=int, default=10000, help="Number of simulation steps")
+    parser.add_argument("--version", action="version", version="%(prog)s v1.0.0")
     
     args = parser.parse_args()
     
