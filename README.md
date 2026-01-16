@@ -67,6 +67,6 @@ Results are saved in `output/<NAME>/`:
 ## 🧪 Simulation Physics
 
 The simulation uses a **Generic Hydrophobic Interaction** model:
-*   **Force Field**: Lennard-Jones ($ \epsilon=0.105, \sigma=2.5 $).
+*   **Force Field**: Lennard-Jones (epsilon=0.105, sigma=2.5 $).
 *   **Solvent**: Implicit solvent via Langevin thermostat.
 *   **Viscosity**: Tuned damping for realistic drifting rather than high-frequency vibrations.
