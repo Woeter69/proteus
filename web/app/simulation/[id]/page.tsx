@@ -111,11 +111,13 @@ export default function SimulationResultPage() {
   const [sim, setSim] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
   useEffect(() => {
     if (!id) return;
     const fetchSim = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/simulations/${id}`);
+        const res = await fetch(`${API_BASE}/simulations/${id}`);
         if (res.ok) {
           const data = await res.json();
           setSim(data);

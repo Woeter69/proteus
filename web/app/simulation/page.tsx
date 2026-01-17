@@ -107,9 +107,11 @@ function DecorationCube() {
 function RecentSimulations() {
   const [sims, setSims] = useState<any[]>([]);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
   const fetchSims = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/simulations");
+      const res = await fetch(`${API_BASE}/simulations`);
       if (res.ok) {
         const data = await res.json();
         setSims(data);
@@ -175,7 +177,7 @@ export default function SimulationPage() {
     setTaskId(null);
     
     try {
-      const response = await fetch("http://localhost:8000/api/simulate", {
+      const response = await fetch(`${API_BASE}/simulate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
