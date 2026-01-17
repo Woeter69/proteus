@@ -47,8 +47,9 @@ COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template
 # 5. Starts Next.js on 3000
 # 6. Starts Nginx on $PORT
 RUN echo '#!/bin/bash' > /app/start.sh && \
-    echo 'envsubst "$PORT" < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf' >> /app/start.sh && \
+    echo 'envsubst '\''${PORT}'\'' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf' >> /app/start.sh && \
     echo 'redis-server --daemonize yes' >> /app/start.sh && \
+    echo 'sleep 2' >> /app/start.sh && \
     echo 'celery -A backend.worker:celery_app worker --loglevel=info &' >> /app/start.sh && \
     echo 'uvicorn backend.main:app --host 127.0.0.1 --port 8000 &' >> /app/start.sh && \
     echo 'npm run start -- -p 3000 &' >> /app/start.sh && \
