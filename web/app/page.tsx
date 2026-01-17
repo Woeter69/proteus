@@ -189,7 +189,7 @@ export default function Home() {
           PROTEUS
         </h1>
         <p className="text-xl md:text-2xl text-gray-300 max-w-md font-light">
-          Advanced automated pipeline for polymer simulation and molecular dynamics.
+          Automated Molecular Dynamics Pipeline for Polymer Engineering.
         </p>
         <div className="flex gap-4 pt-4">
           <Link href="/simulation" className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all glow-box">
