@@ -105,13 +105,13 @@ function DecorationCube() {
   );
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 export default function SimulationResultPage() {
   const params = useParams();
   const id = params.id;
   const [sim, setSim] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
   useEffect(() => {
     if (!id) return;

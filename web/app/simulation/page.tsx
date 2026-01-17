@@ -104,10 +104,10 @@ function DecorationCube() {
   );
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
 function RecentSimulations() {
   const [sims, setSims] = useState<any[]>([]);
-
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
   const fetchSims = async () => {
     try {

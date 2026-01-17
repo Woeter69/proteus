@@ -39,11 +39,13 @@ All notable changes to the Proteus project will be documented in this file.
 ### Changed
 - **Dependency Management**: Moved backend dependencies from `backend/requirements.txt` to the central `environment.yml` to leverage the existing `proteus_env` Conda environment.
 - **Run Scripts**: Updated `dev.sh` to explicitly run the backend using `conda run -n proteus_env` to ensure access to scientific libraries (`rdkit`, `lammps`).
+- **Deployment**: Updated `Dockerfile` and `start.sh` to include `redis-server` and `celery worker`, making the Docker image fully functional for simulations out-of-the-box.
+- **Dependencies**: Added `libgomp1` to the system dependencies for LAMMPS support in the container.
 
 ### Fixed
 - **Docker Build**: Fixed a syntax error in `Dockerfile` line 50 where a multi-line `echo` command was incorrectly formatted, causing a parse error.
-- **Backend**: Fixed undefined references to `Base` and `Simulation` in `backend/main.py` by correctly namespacing them under `models`.
+- **Frontend Build**: Resolved a TypeScript error in `web/app/page.tsx` where `disableNormalPass` was used instead of the correct `enableNormalPass={false}` prop for `EffectComposer`.
 - **Frontend Integration**: Updated `web/app/simulation/[id]/page.tsx` to use relative URLs for result files, ensuring compatibility with Nginx proxying.
+- **Frontend Logic**: Fixed a `ReferenceError` in `web/app/simulation/page.tsx` where `API_BASE` was not defined within the scope of the `SimulationPage` component.
 - **Nginx Config**: Added a `/files` proxy location to `nginx.conf.template` to allow serving simulation results (logs, GIFs) from the backend.
-- **Deployment**: Updated `Dockerfile` and `start.sh` to include `redis-server` and `celery worker`, making the Docker image fully functional for simulations out-of-the-box.
-- **Dependencies**: Added `libgomp1` to the system dependencies for LAMMPS support in the container.
+- **Backend**: Fixed undefined references to `Base` and `Simulation` in `backend/main.py` by correctly namespacing them under `models`.

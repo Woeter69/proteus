@@ -172,7 +172,7 @@ export default function Home() {
 
           <FancyCube />
 
-          <EffectComposer disableNormalPass>
+          <EffectComposer enableNormalPass={false}>
             <Bloom 
               luminanceThreshold={1} 
               mipmapBlur 
