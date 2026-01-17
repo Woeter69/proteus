@@ -9,7 +9,7 @@ import Link from "next/link";
 function DecorationCube() {
   const size = 1.5;
   const halfSize = size / 2;
-  const trapOffset = 0.1;
+  const trapOffset = 0.08;
 
   const trapShape = useMemo(() => {
     const s = new THREE.Shape();
