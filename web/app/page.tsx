@@ -1,17 +1,16 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Sparkles, Environment, Float, Edges, Line } from "@react-three/drei";
+import { Stars, Sparkles, Environment, Float, Edges, Lightformer, MeshTransmissionMaterial } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 
-// Custom Shader for the Glowy Rainbow Spectrum Cube
-const RainbowSpectrumShader = {
+// Custom Shader for the Additive Spectral Ghost Layer
+const SpectralGhostShader = {
   uniforms: {
     uTime: { value: 0 },
-    uColor: { value: new THREE.Color("#050510") },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -26,10 +25,15 @@ const RainbowSpectrumShader = {
   `,
   fragmentShader: `
     uniform float uTime;
-    uniform vec3 uColor;
     varying vec2 vUv;
     varying vec3 vNormal;
     varying vec3 vPosition;
+
+    vec3 hsv2rgb(vec3 c) {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
 
     // Simplex 2D noise
     vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -55,58 +59,36 @@ const RainbowSpectrumShader = {
       return 130.0 * dot(m, g);
     }
 
-    vec3 hsv2rgb(vec3 c) {
-      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-    }
-
     void main() {
       vec2 uv = vUv;
+      float noise = snoise(uv * 2.0 + uTime * 0.1);
       
-      // Slow, heavy fluid noise
-      float n1 = snoise(uv * 1.5 + uTime * 0.05);
-      float n2 = snoise(uv * 3.0 - uTime * 0.03);
+      float hue = fract(uv.x + uv.y * 0.3 + noise * 0.2 + uTime * 0.05);
+      vec3 rainbow = hsv2rgb(vec3(hue, 0.5, 0.25));
       
-      // ABYSSAL SPECTRUM GHOST
-      // Faint, spectral clouds that drift in the void
-      float drift = n1 * n2;
+      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 3.0);
+      float mask = smoothstep(-0.5, 0.8, noise);
+      vec3 color = rainbow * (mask * 0.6 + fresnel * 0.4);
       
-      // Extremely low saturation (0.3) and very low brightness (0.15)
-      // This makes the spectrum look like a ghost or a faint nebula reflection
-      float hue = fract(uv.x * 0.2 + uv.y * 0.2 + n1 * 0.1 + uTime * 0.02);
-      vec3 spectralFog = hsv2rgb(vec3(hue, 0.4, 0.12));
-      
-      // Near-zero base color
-      vec3 darkVoid = vec3(0.001, 0.001, 0.002);
-      
-      // Fresnel for the edge definition (also very dim)
-      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 4.0);
-      
-      // Combine. The spectrum is barely there, appearing as "fog" in the blackness.
-      vec3 finalColor = mix(darkVoid, spectralFog, smoothstep(-0.5, 1.0, drift) * 0.8 + fresnel * 0.2);
-      
-      // Subtly add back a tiny bit of rainbow to the Fresnel edges only
-      finalColor += fresnel * spectralFog * 2.0;
-      
-      // Transparent but very dark
-      gl_FragColor = vec4(finalColor, 0.7);
+      gl_FragColor = vec4(color, 1.0);
     }
   `,
   transparent: true,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
   side: THREE.DoubleSide,
 };
 
 function FancyCube() {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const material = useMemo(() => new THREE.ShaderMaterial(RainbowSpectrumShader), []);
+  const spinnerRef = useRef<THREE.Group>(null);
+  const ghostMaterial = useMemo(() => new THREE.ShaderMaterial(SpectralGhostShader), []);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.25;
-      meshRef.current.rotation.x = state.clock.elapsedTime * 0.1;
+    if (spinnerRef.current) {
+      spinnerRef.current.rotation.y = state.clock.elapsedTime * 0.2;
+      spinnerRef.current.rotation.x = state.clock.elapsedTime * 0.1;
     }
-    material.uniforms.uTime.value = state.clock.elapsedTime;
+    ghostMaterial.uniforms.uTime.value = state.clock.elapsedTime;
   });
 
   const size = 2.2;
@@ -114,60 +96,95 @@ function FancyCube() {
   return (
     <group position={[2.5, 0, 0]}>
       <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
-        <mesh ref={meshRef} material={material}>
-          <boxGeometry args={[size, size, size]} />
-          {/* GLOWY WHITE OUTLINES */}
-          <Edges 
-            threshold={15} 
-            color="#ffffff" 
-            scale={1.01}
-          >
-             <meshBasicMaterial color="#ffffff" toneMapped={false} />
-          </Edges>
-          
-          {/* Inner structure for extra depth */}
-          <Edges 
-            threshold={15} 
-            color="#ffffff" 
-            scale={0.99}
-          >
-             <meshBasicMaterial color="#ffffff" transparent opacity={0.2} toneMapped={false} />
-          </Edges>
-        </mesh>
+        <group ref={spinnerRef}>
+          <mesh>
+            <boxGeometry args={[size, size, size]} />
+            <MeshTransmissionMaterial
+              backside
+              samples={16}
+              resolution={1024}
+              transmission={1}
+              roughness={0.0}
+              thickness={2.5}
+              ior={1.8} // High IOR for strong refraction warping
+              chromaticAberration={0.2}
+              anisotropy={0.1}
+              distortion={0.8}
+              distortionScale={0.5}
+              temporalDistortion={0.1}
+              color="white"
+              attenuationDistance={0.8}
+              attenuationColor="#050515"
+            />
+            <Edges threshold={15} color="#ffffff" scale={1.01}>
+               <meshBasicMaterial color="#ffffff" toneMapped={false} />
+            </Edges>
+          </mesh>
+
+          <mesh scale={1.002}>
+            <boxGeometry args={[size, size, size]} />
+            <primitive object={ghostMaterial} attach="material" />
+          </mesh>
+        </group>
       </Float>
     </group>
   );
 }
 
 export default function Home() {
+  // Generate random positions for star-like lightformers
+  const starLightformers = useMemo(() => {
+    return Array.from({ length: 50 }).map((_, i) => ({
+      position: [
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20,
+      ] as [number, number, number],
+      scale: Math.random() * 0.1 + 0.05,
+      intensity: Math.random() * 5 + 2,
+    }));
+  }, []);
+
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row items-center justify-center p-8 md:p-24 relative overflow-hidden bg-black">
       
       <div className="absolute inset-0 z-0">
         <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 8], fov: 40 }}>
-          <ambientLight intensity={0.2} />
-          <Stars radius={300} depth={60} count={20000} factor={8} saturation={0} fade speed={1} />
-          <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.15} color="#ffffff" />
+          <ambientLight intensity={0.5} />
+          
+          {/* BRIGHTER BACKGROUND STARS FOR REFRACTION */}
+          <Stars radius={300} depth={60} count={20000} factor={12} saturation={0} fade speed={1} />
+          <Sparkles scale={100} count={1000} size={4} speed={0.2} opacity={0.5} color="#ffffff" />
           
           <Suspense fallback={null}>
             <Environment resolution={1024}>
-              <group rotation={[-Math.PI / 4, 0, 0]}>
-                <mesh scale={200}>
-                  <sphereGeometry args={[1, 64, 64]} />
-                  <meshBasicMaterial color="#000000" side={THREE.BackSide} />
-                </mesh>
-              </group>
+              {/* Background sphere to provide a context for the environment */}
+              <mesh scale={100}>
+                <sphereGeometry args={[1, 64, 64]} />
+                <meshBasicMaterial color="#000000" side={THREE.BackSide} />
+              </mesh>
+              
+              {/* STAR-LIKE LIGHTFORMERS FOR REFLECTION */}
+              {starLightformers.map((star, i) => (
+                <Lightformer
+                  key={i}
+                  form="circle"
+                  intensity={star.intensity}
+                  position={star.position}
+                  scale={star.scale}
+                  color="white"
+                />
+              ))}
+              
+              {/* Some larger lightformers for general glass sheen */}
+              <Lightformer form="rect" intensity={2} rotation-x={Math.PI / 2} position={[0, 5, -5]} scale={[10, 10, 1]} />
+              <Lightformer form="rect" intensity={1} rotation-y={Math.PI / 2} position={[-5, 2, 0]} scale={[10, 10, 1]} />
             </Environment>
 
             <FancyCube />
 
             <EffectComposer enableNormalPass={false}>
-              <Bloom 
-                luminanceThreshold={1} 
-                mipmapBlur 
-                intensity={1.2} // Increased intensity for glowy effect
-                radius={0.4} 
-              />
+              <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} radius={0.4} />
             </EffectComposer>
           </Suspense>
         </Canvas>
