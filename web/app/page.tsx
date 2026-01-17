@@ -16,11 +16,13 @@ function FancyCube() {
     }
   });
 
+  // Calculate rotation to align the cube's diagonal with the Y-axis (isometric look)
   const cubeRotation: [number, number, number] = [Math.atan(1 / Math.sqrt(2)), 0, Math.PI / 4];
   const size = 1.8;
   const halfSize = size / 2;
   const trapOffset = 0.12;
 
+  // Define the trapezium shape that expands from the cube edges onto the faces
   const trapShape = useMemo(() => {
     const s = new THREE.Shape();
     s.moveTo(-halfSize, halfSize);
@@ -31,6 +33,7 @@ function FancyCube() {
     return s;
   }, [halfSize, trapOffset]);
 
+  // Define the twin blade sword shape (a long, thin diamond)
   const bladeShape = useMemo(() => {
     const s = new THREE.Shape();
     s.moveTo(0, halfSize);
