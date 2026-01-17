@@ -10,6 +10,10 @@ dependencies:
   - fastapi
   - uvicorn
   - python-multipart
+  - celery
+  - redis
+  - sqlalchemy
+  - alembic
   - pip
   - pip:
     - ovito
