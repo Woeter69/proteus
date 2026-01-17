@@ -1,23 +1,106 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Edges } from "@react-three/drei";
+import { Edges, Line } from "@react-three/drei";
+import * as THREE from "three";
 import Link from "next/link";
 
 function DecorationCube() {
+  const size = 1.5;
+  const halfSize = size / 2;
+  const trapOffset = 0.1;
+
+  const trapShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-halfSize, halfSize);
+    s.lineTo(halfSize, halfSize);
+    s.lineTo(halfSize * 0.7, halfSize - trapOffset);
+    s.lineTo(-halfSize * 0.7, halfSize - trapOffset);
+    s.closePath();
+    return s;
+  }, [halfSize, trapOffset]);
+
+  const bladeShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(0, halfSize);
+    s.lineTo(0.02, 0);
+    s.lineTo(0, -halfSize);
+    s.lineTo(-0.02, 0);
+    s.closePath();
+    return s;
+  }, [halfSize]);
+
   return (
-    <mesh rotation={[0.5, 0.5, 0]}>
-      <boxGeometry args={[1.5, 1.5, 1.5]} />
-      <meshPhysicalMaterial 
-        color="#000000" 
-        emissive="#ffffff"
-        emissiveIntensity={0.2}
-        transparent
-        opacity={0.8}
-      />
-      <Edges color="#ffffff" threshold={15} scale={1} />
-    </mesh>
+    <group rotation={[0.5, 0.5, 0]}>
+      <mesh>
+        <boxGeometry args={[size, size, size]} />
+        <meshPhysicalMaterial 
+          color="#000000" 
+          emissive="#ffffff"
+          emissiveIntensity={0.2}
+          transparent
+          opacity={0.8}
+        />
+        <Edges color="#ffffff" threshold={15} scale={1} />
+      </mesh>
+      
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const rot: [number, number, number] = [0, 0, 0];
+        if (i === 4) rot[0] = Math.PI / 2;
+        else if (i === 5) rot[0] = -Math.PI / 2;
+        else rot[1] = (i * Math.PI) / 2;
+
+        return (
+          <group key={`face-${i}`} rotation={rot}>
+            <group position={[0, 0, halfSize * 1.01]}>
+              <mesh>
+                <planeGeometry args={[0.2, 0.2]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
+              </mesh>
+
+              {[0, 1].map((r) => (
+                <group key={`face-blade-${r}`} rotation={[0, 0, r * Math.PI / 2]}>
+                   <mesh>
+                     <shapeGeometry args={[bladeShape]} />
+                     <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
+                   </mesh>
+                   <Line
+                     points={[[0, -halfSize, 0], [0, halfSize, 0]]}
+                     color="#ffffff"
+                     lineWidth={1}
+                     transparent
+                     opacity={0.8}
+                   />
+                </group>
+              ))}
+              
+              {[0, 1, 2, 3].map((side) => (
+                <group key={`trap-${side}`} rotation={[0, 0, (side * Math.PI) / 2]}>
+                   <mesh>
+                     <shapeGeometry args={[trapShape]} />
+                     <meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
+                   </mesh>
+                   <Line
+                     points={[
+                       [-halfSize, halfSize, 0],
+                       [halfSize, halfSize, 0],
+                       [halfSize * 0.7, halfSize - trapOffset, 0],
+                       [-halfSize * 0.7, halfSize - trapOffset, 0],
+                       [-halfSize, halfSize, 0],
+                     ]}
+                     color="#ffffff"
+                     lineWidth={1}
+                     transparent
+                     opacity={0.8}
+                   />
+                </group>
+              ))}
+            </group>
+          </group>
+        );
+      })}
+    </group>
   );
 }
 
