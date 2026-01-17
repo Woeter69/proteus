@@ -1,24 +1,107 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Canvas } from "@react-three/fiber";
-import { Edges } from "@react-three/drei";
+import { Edges, Line } from "@react-three/drei";
+import * as THREE from "three";
 
 function DecorationCube() {
+  const size = 1.5;
+  const halfSize = size / 2;
+  const trapOffset = 0.1;
+
+  const trapShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-halfSize, halfSize);
+    s.lineTo(halfSize, halfSize);
+    s.lineTo(halfSize * 0.7, halfSize - trapOffset);
+    s.lineTo(-halfSize * 0.7, halfSize - trapOffset);
+    s.closePath();
+    return s;
+  }, [halfSize, trapOffset]);
+
+  const bladeShape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(0, halfSize);
+    s.lineTo(0.02, 0);
+    s.lineTo(0, -halfSize);
+    s.lineTo(-0.02, 0);
+    s.closePath();
+    return s;
+  }, [halfSize]);
+
   return (
-    <mesh rotation={[0.5, 0.5, 0]}>
-      <boxGeometry args={[1.5, 1.5, 1.5]} />
-      <meshPhysicalMaterial 
-        color="#000000" 
-        emissive="#4444ff"
-        emissiveIntensity={0.1}
-        transparent
-        opacity={0.8}
-      />
-      <Edges color="#4444ff" threshold={15} scale={1} />
-    </mesh>
+    <group rotation={[0.5, 0.5, 0]}>
+      <mesh>
+        <boxGeometry args={[size, size, size]} />
+        <meshPhysicalMaterial 
+          color="#000000" 
+          emissive="#4444ff"
+          emissiveIntensity={0.1}
+          transparent
+          opacity={0.8}
+        />
+        <Edges color="#4444ff" threshold={15} scale={1} />
+      </mesh>
+      
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const rot: [number, number, number] = [0, 0, 0];
+        if (i === 4) rot[0] = Math.PI / 2;
+        else if (i === 5) rot[0] = -Math.PI / 2;
+        else rot[1] = (i * Math.PI) / 2;
+
+        return (
+          <group key={`face-${i}`} rotation={rot}>
+            <group position={[0, 0, halfSize * 1.01]}>
+              <mesh>
+                <planeGeometry args={[0.2, 0.2]} />
+                <meshBasicMaterial color="#4444ff" transparent opacity={0.9} />
+              </mesh>
+
+              {[0, 1].map((r) => (
+                <group key={`face-blade-${r}`} rotation={[0, 0, r * Math.PI / 2]}>
+                   <mesh>
+                     <shapeGeometry args={[bladeShape]} />
+                     <meshBasicMaterial color="#4444ff" transparent opacity={0.6} />
+                   </mesh>
+                   <Line
+                     points={[[0, -halfSize, 0], [0, halfSize, 0]]}
+                     color="#4444ff"
+                     lineWidth={1}
+                     transparent
+                     opacity={0.8}
+                   />
+                </group>
+              ))}
+              
+              {[0, 1, 2, 3].map((side) => (
+                <group key={`trap-${side}`} rotation={[0, 0, (side * Math.PI) / 2]}>
+                   <mesh>
+                     <shapeGeometry args={[trapShape]} />
+                     <meshBasicMaterial color="#4444ff" transparent opacity={0.4} />
+                   </mesh>
+                   <Line
+                     points={[
+                       [-halfSize, halfSize, 0],
+                       [halfSize, halfSize, 0],
+                       [halfSize * 0.7, halfSize - trapOffset, 0],
+                       [-halfSize * 0.7, halfSize - trapOffset, 0],
+                       [-halfSize, halfSize, 0],
+                     ]}
+                     color="#4444ff"
+                     lineWidth={1}
+                     transparent
+                     opacity={0.8}
+                   />
+                </group>
+              ))}
+            </group>
+          </group>
+        );
+      })}
+    </group>
   );
 }
 
@@ -56,15 +139,8 @@ export default function SimulationResultPage() {
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
   if (!sim) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Simulation not found</div>;
 
-  // Construct file URLs
-  // Backend mounts 'output' at '/files'
-  // File paths in DB are absolute local paths, we need to extract the relative part
-  // DB path: /home/user/.../output/name/file.gif
-  // URL: http://localhost:8000/files/name/file.gif
-  
   const getFileUrl = (path: string | null) => {
       if (!path) return null;
-      // Extract the part after 'output/'
       const parts = path.split('/output/');
       if (parts.length > 1) {
           return `http://localhost:8000/files/${parts[1]}`;
@@ -78,10 +154,8 @@ export default function SimulationResultPage() {
 
   return (
     <div className="flex min-h-screen flex-col p-8 md:p-24 relative overflow-hidden bg-black text-white">
-      {/* Background Ambience */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-900 opacity-10 rounded-full blur-3xl pointer-events-none" />
       
-      {/* Header */}
       <div className="w-full max-w-6xl mb-12 flex justify-between items-center z-10">
         <Link href="/" className="text-2xl font-bold tracking-tighter glow-text hover:opacity-80 transition-opacity">
           PROTEUS
@@ -95,8 +169,6 @@ export default function SimulationResultPage() {
       </div>
 
       <main className="w-full max-w-6xl z-10 grid grid-cols-1 md:grid-cols-2 gap-12">
-        
-        {/* Left Column: Details */}
         <div className="space-y-8">
             <div>
                 <Link href="/simulation" className="text-zinc-500 hover:text-white mb-4 block transition-colors">← Back to List</Link>
@@ -140,7 +212,6 @@ export default function SimulationResultPage() {
                 <h3 className="text-lg font-bold mb-4 border-b border-white/10 pb-2">Metrics</h3>
                 {sim.status === 'COMPLETED' ? (
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                        {/* Placeholders for metrics until we parse them properly */}
                         <div>
                             <span className="block text-zinc-500">Radius of Gyration (Rg)</span>
                             <span className="font-mono text-xl text-blue-400">{(Math.random() * 10 + 5).toFixed(2)} Å</span>
@@ -165,7 +236,6 @@ export default function SimulationResultPage() {
             </div>
         </div>
 
-        {/* Right Column: Visualization */}
         <div className="flex flex-col gap-6">
             <div className="bg-black border border-white/20 rounded-xl overflow-hidden aspect-square flex items-center justify-center relative">
                 {sim.status === 'COMPLETED' && gifUrl ? (
@@ -179,7 +249,6 @@ export default function SimulationResultPage() {
                     <div className="text-zinc-600">Visualization Pending</div>
                 )}
                 
-                {/* Overlay Badge */}
                 <div className="absolute bottom-4 right-4 bg-black/80 px-2 py-1 rounded text-xs text-zinc-400">
                     Renderer: Ovito/OpenGL
                 </div>
@@ -189,7 +258,6 @@ export default function SimulationResultPage() {
                 System: 12-Core CPU | 32GB RAM | GPU Acceleration: Active
             </div>
         </div>
-
       </main>
     </div>
   );
