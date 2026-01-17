@@ -47,5 +47,6 @@ All notable changes to the Proteus project will be documented in this file.
 - **Frontend Build**: Resolved a TypeScript error in `web/app/page.tsx` where `disableNormalPass` was used instead of the correct `enableNormalPass={false}` prop for `EffectComposer`.
 - **Frontend Integration**: Updated `web/app/simulation/[id]/page.tsx` to use relative URLs for result files, ensuring compatibility with Nginx proxying.
 - **Frontend Logic**: Fixed a `ReferenceError` in `web/app/simulation/page.tsx` where `API_BASE` was not defined within the scope of the `SimulationPage` component.
+- **Frontend Stability**: Wrapped 3D components (`FancyCube`, `Environment`, `DecorationCube`) in `Suspense` boundaries to prevent the 3D Canvas from disappearing during navigation or resource loading.
 - **Nginx Config**: Added a `/files` proxy location to `nginx.conf.template` to allow serving simulation results (logs, GIFs) from the backend.
 - **Backend**: Fixed undefined references to `Base` and `Simulation` in `backend/main.py` by correctly namespacing them under `models`.

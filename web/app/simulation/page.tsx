@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Edges, Line, Stars, Sparkles, Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -35,12 +35,9 @@ function DecorationCube() {
     <group rotation={[0.5, 0.5, 0]}>
       <mesh>
         <boxGeometry args={[size, size, size]} />
-        <meshPhysicalMaterial 
+        <meshStandardMaterial 
           color="#000000" 
-          emissive="#ffffff"
-          emissiveIntensity={0.2}
-          transparent
-          opacity={0.8}
+          roughness={1}
         />
         <Edges color="#ffffff" threshold={15} scale={1} />
       </mesh>
@@ -217,14 +214,16 @@ export default function SimulationPage() {
           <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.15} color="#ffffff" />
           <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.3} color="#ffffff" />
           
-          <Environment resolution={1024}>
-            <group rotation={[-Math.PI / 4, 0, 0]}>
-              <mesh scale={200}>
-                <sphereGeometry args={[1, 64, 64]} />
-                <meshBasicMaterial color="#000000" side={THREE.BackSide} />
-              </mesh>
-            </group>
-          </Environment>
+          <Suspense fallback={null}>
+            <Environment resolution={1024}>
+              <group rotation={[-Math.PI / 4, 0, 0]}>
+                <mesh scale={200}>
+                  <sphereGeometry args={[1, 64, 64]} />
+                  <meshBasicMaterial color="#000000" side={THREE.BackSide} />
+                </mesh>
+              </group>
+            </Environment>
+          </Suspense>
         </Canvas>
       </div>
 
@@ -235,8 +234,10 @@ export default function SimulationPage() {
         </Link>
         <div className="h-12 w-12">
            <Canvas camera={{ position: [0, 0, 4] }}>
-              <ambientLight intensity={0.5} />
-              <DecorationCube />
+              <Suspense fallback={null}>
+                <ambientLight intensity={0.5} />
+                <DecorationCube />
+              </Suspense>
            </Canvas>
         </div>
       </div>

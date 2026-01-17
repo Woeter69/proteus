@@ -1,141 +1,132 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Edges, Float, Stars, Sparkles, MeshTransmissionMaterial, Environment, Line } from "@react-three/drei";
+import { Stars, Sparkles, Environment, Float, Edges, Line } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, Suspense } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 
-function FancyCube() {
-  const spinnerRef = useRef<THREE.Group>(null);
-
-  useFrame((state, delta) => {
-    if (spinnerRef.current) {
-      spinnerRef.current.rotation.y -= delta * 0.4;
+// Custom Shader for the Glowy Rainbow Spectrum Cube
+const RainbowSpectrumShader = {
+  uniforms: {
+    uTime: { value: 0 },
+    uColor: { value: new THREE.Color("#050510") },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    void main() {
+      vUv = uv;
+      vNormal = normalize(normalMatrix * normal);
+      vPosition = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
+  `,
+  fragmentShader: `
+    uniform float uTime;
+    uniform vec3 uColor;
+    varying vec2 vUv;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+
+    // Simplex 2D noise
+    vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+    float snoise(vec2 v) {
+      const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+      vec2 i  = floor(v + dot(v, C.yy) );
+      vec2 x0 = v -   i + dot(i, C.xx);
+      vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+      vec4 x12 = x0.xyxy + C.xxzz;
+      x12.xy -= i1;
+      i = mod(i, 289.0);
+      vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+      vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+      m = m*m ; m = m*m ;
+      vec3 x = 2.0 * fract(p * C.www) - 1.0;
+      vec3 h = abs(x) - 0.5;
+      vec3 ox = floor(x + 0.5);
+      vec3 a0 = x - ox;
+      m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+      vec3 g;
+      g.x  = a0.x  * x0.x  + h.x  * x0.y;
+      g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+      return 130.0 * dot(m, g);
+    }
+
+    vec3 hsv2rgb(vec3 c) {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+    void main() {
+      vec2 uv = vUv;
+      
+      // Face-stuck noise for the fluid effect
+      float noise = snoise(uv * 2.0 + uTime * 0.1);
+      
+      // DARK RAINBOW SPECTRUM
+      // Lower saturation (0.6) and lower brightness (0.4) for a dark feel
+      float hue = fract(uv.x + uv.y * 0.3 + noise * 0.2 + uTime * 0.05);
+      vec3 rainbow = hsv2rgb(vec3(hue, 0.6, 0.3));
+      
+      // Fresnel for subtle refractive depth
+      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 3.0);
+      
+      // Near-black cosmic base
+      vec3 darkBase = vec3(0.005, 0.005, 0.01);
+      
+      // Mix rainbow with the base. Highlights are very subtle.
+      float fluidMask = smoothstep(-0.4, 0.7, noise);
+      vec3 finalColor = mix(darkBase, rainbow, fluidMask * 0.5 + fresnel * 0.3);
+      
+      // Semi-transparent
+      gl_FragColor = vec4(finalColor, 0.5);
+    }
+  `,
+  transparent: true,
+  side: THREE.DoubleSide,
+};
+
+function FancyCube() {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const material = useMemo(() => new THREE.ShaderMaterial(RainbowSpectrumShader), []);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.25;
+      meshRef.current.rotation.x = state.clock.elapsedTime * 0.1;
+    }
+    material.uniforms.uTime.value = state.clock.elapsedTime;
   });
 
-  // Calculate rotation to align the cube's diagonal with the Y-axis (isometric look)
-  const cubeRotation: [number, number, number] = [Math.atan(1 / Math.sqrt(2)), 0, Math.PI / 4];
-  const size = 1.8;
-  const halfSize = size / 2;
-  const trapOffset = 0.1; // Reduced from 0.12
-
-  // Define the trapezium shape that expands from the cube edges onto the faces
-  const trapShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(-halfSize, halfSize);
-    s.lineTo(halfSize, halfSize);
-    s.lineTo(halfSize * 0.7, halfSize - trapOffset);
-    s.lineTo(-halfSize * 0.7, halfSize - trapOffset);
-    s.closePath();
-    return s;
-  }, [halfSize, trapOffset]);
-
-  // Define the twin blade sword shape (a long, thin diamond)
-  const bladeShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(0, halfSize);
-    s.lineTo(0.03, 0); // Narrower width
-    s.lineTo(0, -halfSize);
-    s.lineTo(-0.03, 0); // Narrower width
-    s.closePath();
-    return s;
-  }, [halfSize]);
+  const size = 2.2;
 
   return (
-    <group position={[2.5, 0, 0]}> {/* Position the cube to the right */}
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-        <group ref={spinnerRef}>
-           <mesh rotation={cubeRotation}>
-              <boxGeometry args={[size, size, size]} />
-              <MeshTransmissionMaterial
-                backside
-                samples={32}
-                resolution={2048}
-                transmission={1}
-                roughness={0.0}
-                thickness={1.5}
-                ior={2.4}
-                chromaticAberration={0.6}
-                anisotropy={0.3}
-                distortion={0}
-                distortionScale={0}
-                temporalDistortion={0}
-                clearcoat={1}
-                attenuationDistance={5}
-                attenuationColor="#ffffff"
-                color="#ffffff"
-                //@ts-ignore
-                iridescence={0.8}
-                //@ts-ignore
-                iridescenceIOR={1.3}
-                //@ts-ignore
-                iridescenceThicknessRange={[100, 800]}
-              />
-           </mesh>
-           
-           <group rotation={cubeRotation}>
-              <Edges color="#ffffff" threshold={15} scale={1} />
-
-              {[0, 1, 2, 3, 4, 5].map((i) => {
-                const rot: [number, number, number] = [0, 0, 0];
-                if (i === 4) rot[0] = Math.PI / 2;
-                else if (i === 5) rot[0] = -Math.PI / 2;
-                else rot[1] = (i * Math.PI) / 2;
-
-                return (
-                  <group key={`face-${i}`} rotation={rot}>
-                    <group position={[0, 0, halfSize * 1.01]}>
-                      <mesh>
-                        <planeGeometry args={[0.4, 0.4]} />
-                        <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
-                      </mesh>
-
-                      {[0, 1].map((r) => (
-                        <group key={`face-blade-${r}`} rotation={[0, 0, r * Math.PI / 2]}>
-                           <mesh>
-                             <shapeGeometry args={[bladeShape]} />
-                             <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
-                           </mesh>
-                           <Line
-                             points={[[0, -halfSize, 0], [0, halfSize, 0]]}
-                             color="#ffffff"
-                             lineWidth={1.5}
-                             transparent
-                             opacity={0.8}
-                           />
-                        </group>
-                      ))}
-                      
-                      {[0, 1, 2, 3].map((side) => (
-                        <group key={`trap-${side}`} rotation={[0, 0, (side * Math.PI) / 2]}>
-                           <mesh>
-                             <shapeGeometry args={[trapShape]} />
-                             <meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
-                           </mesh>
-                           <Line
-                             points={[
-                               [-halfSize, halfSize, 0],
-                               [halfSize, halfSize, 0],
-                               [halfSize * 0.7, halfSize - trapOffset, 0],
-                               [-halfSize * 0.7, halfSize - trapOffset, 0],
-                               [-halfSize, halfSize, 0],
-                             ]}
-                             color="#ffffff"
-                             lineWidth={1}
-                             transparent
-                             opacity={0.8}
-                           />
-                        </group>
-                      ))}
-                    </group>
-                  </group>
-                );
-              })}
-           </group>
-        </group>
+    <group position={[2.5, 0, 0]}>
+      <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
+        <mesh ref={meshRef} material={material}>
+          <boxGeometry args={[size, size, size]} />
+          {/* GLOWY WHITE OUTLINES */}
+          <Edges 
+            threshold={15} 
+            color="#ffffff" 
+            scale={1.01}
+          >
+             <meshBasicMaterial color="#ffffff" toneMapped={false} />
+          </Edges>
+          
+          {/* Inner structure for extra depth */}
+          <Edges 
+            threshold={15} 
+            color="#ffffff" 
+            scale={0.99}
+          >
+             <meshBasicMaterial color="#ffffff" transparent opacity={0.2} toneMapped={false} />
+          </Edges>
+        </mesh>
       </Float>
     </group>
   );
@@ -145,45 +136,36 @@ export default function Home() {
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row items-center justify-center p-8 md:p-24 relative overflow-hidden bg-black">
       
-      {/* Full-screen 3D Background */}
       <div className="absolute inset-0 z-0">
-        <Canvas 
-          shadows
-          dpr={[1, 2]}
-          camera={{ position: [0, 0, 8], fov: 40 }}
-        >
+        <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 8], fov: 40 }}>
           <ambientLight intensity={0.2} />
-          <pointLight position={[10, 10, 10]} intensity={1} color="#ffffff" />
-          
           <Stars radius={300} depth={60} count={20000} factor={8} saturation={0} fade speed={1} />
           <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.15} color="#ffffff" />
-          <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.3} color="#ffffff" />
-          <Sparkles scale={20} count={200} size={1.5} speed={0.3} opacity={0.5} color="#ffffff" />
           
-          <Environment resolution={1024}>
-            <group rotation={[-Math.PI / 4, 0, 0]}>
-              <mesh scale={200}>
-                <sphereGeometry args={[1, 64, 64]} />
-                <meshBasicMaterial color="#000000" side={THREE.BackSide} />
-              </mesh>
-              <Sparkles count={2000} scale={100} size={4} speed={0} opacity={1} color="#ffffff" />
-            </group>
-          </Environment>
+          <Suspense fallback={null}>
+            <Environment resolution={1024}>
+              <group rotation={[-Math.PI / 4, 0, 0]}>
+                <mesh scale={200}>
+                  <sphereGeometry args={[1, 64, 64]} />
+                  <meshBasicMaterial color="#000000" side={THREE.BackSide} />
+                </mesh>
+              </group>
+            </Environment>
 
-          <FancyCube />
+            <FancyCube />
 
-          <EffectComposer enableNormalPass={false}>
-            <Bloom 
-              luminanceThreshold={1} 
-              mipmapBlur 
-              intensity={1.0} 
-              radius={0.3} 
-            />
-          </EffectComposer>
+            <EffectComposer enableNormalPass={false}>
+              <Bloom 
+                luminanceThreshold={1} 
+                mipmapBlur 
+                intensity={1.2} // Increased intensity for glowy effect
+                radius={0.4} 
+              />
+            </EffectComposer>
+          </Suspense>
         </Canvas>
       </div>
 
-      {/* Foreground Content */}
       <div className="flex-1 z-10 flex flex-col items-center md:items-start text-center md:text-left space-y-6">
         <h1 className="text-6xl md:text-8xl font-bold tracking-tighter glow-text text-white">
           PROTEUS
@@ -201,9 +183,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Spacer for the Cube which is now positioned via Three.js group on the right */}
       <div className="flex-1 pointer-events-none" />
-      
     </div>
   );
 }
