@@ -64,26 +64,33 @@ const RainbowSpectrumShader = {
     void main() {
       vec2 uv = vUv;
       
-      // Face-stuck noise for the fluid effect
-      float noise = snoise(uv * 2.0 + uTime * 0.1);
+      // Slow, heavy fluid noise
+      float n1 = snoise(uv * 1.5 + uTime * 0.05);
+      float n2 = snoise(uv * 3.0 - uTime * 0.03);
       
-      // DARK RAINBOW SPECTRUM
-      // Lower saturation (0.6) and lower brightness (0.4) for a dark feel
-      float hue = fract(uv.x + uv.y * 0.3 + noise * 0.2 + uTime * 0.05);
-      vec3 rainbow = hsv2rgb(vec3(hue, 0.6, 0.3));
+      // ABYSSAL SPECTRUM GHOST
+      // Faint, spectral clouds that drift in the void
+      float drift = n1 * n2;
       
-      // Fresnel for subtle refractive depth
-      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 3.0);
+      // Extremely low saturation (0.3) and very low brightness (0.15)
+      // This makes the spectrum look like a ghost or a faint nebula reflection
+      float hue = fract(uv.x * 0.2 + uv.y * 0.2 + n1 * 0.1 + uTime * 0.02);
+      vec3 spectralFog = hsv2rgb(vec3(hue, 0.4, 0.12));
       
-      // Near-black cosmic base
-      vec3 darkBase = vec3(0.005, 0.005, 0.01);
+      // Near-zero base color
+      vec3 darkVoid = vec3(0.001, 0.001, 0.002);
       
-      // Mix rainbow with the base. Highlights are very subtle.
-      float fluidMask = smoothstep(-0.4, 0.7, noise);
-      vec3 finalColor = mix(darkBase, rainbow, fluidMask * 0.5 + fresnel * 0.3);
+      // Fresnel for the edge definition (also very dim)
+      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 4.0);
       
-      // Semi-transparent
-      gl_FragColor = vec4(finalColor, 0.5);
+      // Combine. The spectrum is barely there, appearing as "fog" in the blackness.
+      vec3 finalColor = mix(darkVoid, spectralFog, smoothstep(-0.5, 1.0, drift) * 0.8 + fresnel * 0.2);
+      
+      // Subtly add back a tiny bit of rainbow to the Fresnel edges only
+      finalColor += fresnel * spectralFog * 2.0;
+      
+      // Transparent but very dark
+      gl_FragColor = vec4(finalColor, 0.7);
     }
   `,
   transparent: true,
