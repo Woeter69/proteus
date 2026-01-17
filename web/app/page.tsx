@@ -37,9 +37,9 @@ function FancyCube() {
   const bladeShape = useMemo(() => {
     const s = new THREE.Shape();
     s.moveTo(0, halfSize);
-    s.lineTo(0.04, 0);
+    s.lineTo(0.03, 0); // Narrower width
     s.lineTo(0, -halfSize);
-    s.lineTo(-0.04, 0);
+    s.lineTo(-0.03, 0); // Narrower width
     s.closePath();
     return s;
   }, [halfSize]);
