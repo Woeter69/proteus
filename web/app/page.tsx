@@ -156,9 +156,9 @@ export default function Home() {
           <pointLight position={[10, 10, 10]} intensity={1} color="#ffffff" />
           
           <Stars radius={300} depth={60} count={20000} factor={7} saturation={0} fade speed={1} />
-          <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.2} color="#ffffff" />
-          <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.4} color="#ffffff" />
-          <Sparkles scale={20} count={200} size={1.5} speed={0.3} opacity={0.6} color="#ffffff" />
+          <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.15} color="#ffffff" />
+          <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.3} color="#ffffff" />
+          <Sparkles scale={20} count={200} size={1.5} speed={0.3} opacity={0.5} color="#ffffff" />
           
           <Environment resolution={1024}>
             <group rotation={[-Math.PI / 4, 0, 0]}>
