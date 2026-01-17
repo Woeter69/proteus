@@ -145,7 +145,9 @@ export default function SimulationResultPage() {
       if (!path) return null;
       const parts = path.split('/output/');
       if (parts.length > 1) {
-          return `http://localhost:8000/files/${parts[1]}`;
+          // In production, Nginx proxies /files to the backend.
+          // In development, the backend is on :8000.
+          return `/files/${parts[1]}`;
       }
       return null;
   };

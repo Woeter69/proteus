@@ -16,7 +16,7 @@ from backend import models
 from fastapi.staticfiles import StaticFiles
 
 # Create Tables
-Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Proteus API")
 
@@ -88,7 +88,7 @@ def list_simulations(db: Session = Depends(get_db)):
 
 @app.get("/api/simulations/{sim_id}")
 def get_simulation(sim_id: int, db: Session = Depends(get_db)):
-    sim = db.query(Simulation).filter(Simulation.id == sim_id).first()
+    sim = db.query(models.Simulation).filter(models.Simulation.id == sim_id).first()
     if not sim:
         raise HTTPException(status_code=404, detail="Simulation not found")
     return sim
