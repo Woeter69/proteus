@@ -36,6 +36,7 @@
 
 ### Phase 1: Web Interface (Simulation-as-a-Service) - **[IN PROGRESS]**
 - [x] **Architecture Setup**: Established Monorepo (FastAPI + Next.js).
+- [x] **Landing Page**: Implemented "Black & Glowy" 3D Hero section.
 - [ ] **Goal**: Allow remote users to submit simulation requests via a browser.
 - [ ] **Backend**: Create a Job Queue system (Redis/Celery) to manage simulation load on the host device.
 - [ ] **Database**: Implement a SQL database to store SMILES inputs, user details, and simulation results (Trajectory/$R_g$).

@@ -2,9 +2,18 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
-## [Unreleased] - 2026-01-16
+## [Unreleased] - 2026-01-17
 
 ### Added
+- **Web Interface (Phase 1)**:
+    - Re-implemented and enhanced the **3D Cube Hero** component with a glass-like `MeshTransmissionMaterial` and glowy white outlines.
+    - Integrated `Bloom` post-processing for a futuristic "Black & Glowy" aesthetic.
+    - Confirmed landing page introduces the Proteus project with interactive 3D elements.
+- **Backend Infrastructure**:
+    - Added `celery` and `redis` to `environment.yml` for asynchronous task processing.
+    - Configured Celery app in `backend/celery_app.py`.
+    - Created `backend/worker.py` to handle simulation pipeline tasks in the background.
+    - Exposed `POST /api/simulate` endpoint to trigger simulations.
 - **Automation**: Added `conda env update --file environment.yml --prune` to `dev.sh` and `Makefile` to automate dependency management.
 - **Monorepo Architecture**: Established a unified repository structure for CLI, Backend, and Frontend.
 - **Backend**:
