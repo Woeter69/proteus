@@ -238,7 +238,7 @@ export default function SimulationPage() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Polyethylene Test"
+                placeholder="e.g., PEO_Oligomer"
                 className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all"
               />
             </div>
