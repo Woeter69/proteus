@@ -5,6 +5,10 @@ All notable changes to the Proteus project will be documented in this file.
 ## [Unreleased] - 2026-01-17
 
 ### Added
+- **Visual Enhancements**:
+    - Redesigned 3D Cube Hero and decoration components with **true filled glowy trapeziums** and **filled central squares** on each face.
+    - Added **Twin Blade Connectors** (long, glowy diamond blades) that link opposite trapeziums across each face, creating an intersecting cross-hair effect.
+    - Preserved high-quality glass `MeshTransmissionMaterial` while adding a structured, high-intensity HUD aesthetic.
 - **Web Interface (Phase 1)**:
     - Re-implemented and enhanced the **3D Cube Hero** component with a glass-like `MeshTransmissionMaterial` and glowy white outlines.
     - Integrated `Bloom` post-processing for a futuristic "Black & Glowy" aesthetic.
