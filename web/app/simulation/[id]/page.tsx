@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Canvas } from "@react-three/fiber";
-import { Edges, Line } from "@react-three/drei";
+import { Edges, Line, Stars, Sparkles, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
 function DecorationCube() {
@@ -154,7 +154,26 @@ export default function SimulationResultPage() {
 
   return (
     <div className="flex min-h-screen flex-col p-8 md:p-24 relative overflow-hidden bg-black text-white">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-900 opacity-10 rounded-full blur-3xl pointer-events-none" />
+      {/* Full-screen 3D Background */}
+      <div className="absolute inset-0 z-0">
+        <Canvas 
+          dpr={[1, 2]}
+          camera={{ position: [0, 0, 8], fov: 40 }}
+        >
+          <Stars radius={300} depth={60} count={20000} factor={8} saturation={0} fade speed={1} />
+          <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.1} color="#4444ff" />
+          <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.2} color="#4444ff" />
+          
+          <Environment resolution={1024}>
+            <group rotation={[-Math.PI / 4, 0, 0]}>
+              <mesh scale={200}>
+                <sphereGeometry args={[1, 64, 64]} />
+                <meshBasicMaterial color="#000000" side={THREE.BackSide} />
+              </mesh>
+            </group>
+          </Environment>
+        </Canvas>
+      </div>
       
       <div className="w-full max-w-6xl mb-12 flex justify-between items-center z-10">
         <Link href="/" className="text-2xl font-bold tracking-tighter glow-text hover:opacity-80 transition-opacity">
