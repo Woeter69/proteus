@@ -20,7 +20,7 @@ function FancyCube() {
   const cubeRotation: [number, number, number] = [Math.atan(1 / Math.sqrt(2)), 0, Math.PI / 4];
   const size = 1.8;
   const halfSize = size / 2;
-  const trapOffset = 0.12;
+  const trapOffset = 0.1; // Reduced from 0.12
 
   // Define the trapezium shape that expands from the cube edges onto the faces
   const trapShape = useMemo(() => {
