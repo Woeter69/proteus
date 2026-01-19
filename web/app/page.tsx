@@ -9,16 +9,16 @@ import Link from "next/link";
 
 function FancyCube() {
   const spinnerRef = useRef<THREE.Group>(null);
-  const innerRef = useRef<THREE.Group>(null);
+  const middleRef = useRef<THREE.Group>(null);
   const coreRef = useRef<THREE.Group>(null);
 
   useFrame((state, delta) => {
     if (spinnerRef.current) {
       spinnerRef.current.rotation.y -= delta * 0.4;
     }
-    if (innerRef.current) {
-      innerRef.current.rotation.y += delta * 0.8;
-      innerRef.current.rotation.z += delta * 0.4;
+    if (middleRef.current) {
+      middleRef.current.rotation.y += delta * 0.8;
+      middleRef.current.rotation.z += delta * 0.4;
     }
     if (coreRef.current) {
       coreRef.current.rotation.x -= delta * 1.2;
@@ -28,7 +28,7 @@ function FancyCube() {
 
   const cubeRotation: [number, number, number] = [Math.atan(1 / Math.sqrt(2)), 0, Math.PI / 4];
   const size = 1.8;
-  const innerSize = size * 0.5;
+  const middleSize = size * 0.5;
   const coreSize = size * 0.2;
 
   return (
@@ -63,9 +63,9 @@ function FancyCube() {
            </mesh>
 
            {/* Middle Cube (Glowing Outlines Only) */}
-           <group ref={innerRef} rotation={cubeRotation}>
+           <group ref={middleRef} rotation={cubeRotation}>
              <mesh>
-               <boxGeometry args={[innerSize, innerSize, innerSize]} />
+               <boxGeometry args={[middleSize, middleSize, middleSize]} />
                <meshBasicMaterial color="#000000" transparent opacity={0} /> {/* Invisible faces */}
                <Edges threshold={1} scale={1.001}>
                  <meshBasicMaterial color={[10, 10, 10]} toneMapped={false} />
