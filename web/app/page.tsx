@@ -9,45 +9,34 @@ import Link from "next/link";
 
 function FancyCube() {
   const spinnerRef = useRef<THREE.Group>(null);
+  const innerRef = useRef<THREE.Group>(null);
+  const coreRef = useRef<THREE.Group>(null);
 
   useFrame((state, delta) => {
     if (spinnerRef.current) {
       spinnerRef.current.rotation.y -= delta * 0.4;
     }
+    if (innerRef.current) {
+      innerRef.current.rotation.y += delta * 0.8;
+      innerRef.current.rotation.z += delta * 0.4;
+    }
+    if (coreRef.current) {
+      coreRef.current.rotation.x -= delta * 1.2;
+      coreRef.current.rotation.y -= delta * 0.6;
+    }
   });
 
-  // Calculate rotation to align the cube's diagonal with the Y-axis (isometric look)
   const cubeRotation: [number, number, number] = [Math.atan(1 / Math.sqrt(2)), 0, Math.PI / 4];
   const size = 1.8;
-  const halfSize = size / 2;
-  const trapOffset = 0.1; // Reduced from 0.12
-
-  // Define the trapezium shape that expands from the cube edges onto the faces
-  const trapShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(-halfSize, halfSize);
-    s.lineTo(halfSize, halfSize);
-    s.lineTo(halfSize * 0.7, halfSize - trapOffset);
-    s.lineTo(-halfSize * 0.7, halfSize - trapOffset);
-    s.closePath();
-    return s;
-  }, [halfSize, trapOffset]);
-
-  // Define the twin blade sword shape (a long, thin diamond)
-  const bladeShape = useMemo(() => {
-    const s = new THREE.Shape();
-    s.moveTo(0, halfSize);
-    s.lineTo(0.03, 0); // Narrower width
-    s.lineTo(0, -halfSize);
-    s.lineTo(-0.03, 0); // Narrower width
-    s.closePath();
-    return s;
-  }, [halfSize]);
+  const innerSize = size * 0.5;
+  const coreSize = size * 0.2;
 
   return (
-    <group position={[2.5, 0, 0]}> {/* Position the cube to the right */}
+    <group position={[2.5, 0, 0]}> 
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         <group ref={spinnerRef}>
+           
+           {/* Outer Cube (Prism Glass) */}
            <mesh rotation={cubeRotation}>
               <boxGeometry args={[size, size, size]} />
               <MeshTransmissionMaterial
@@ -56,85 +45,45 @@ function FancyCube() {
                 resolution={2048}
                 transmission={1}
                 roughness={0.0}
-                thickness={1.5}
-                ior={2.4}
-                chromaticAberration={0.6}
-                anisotropy={0.3}
-                distortion={0}
-                distortionScale={0}
-                temporalDistortion={0}
+                thickness={0.2} 
+                ior={1.5}
+                chromaticAberration={1.0}
+                anisotropy={0.1} 
+                distortion={0.0} // Removed distortion to see inside
+                distortionScale={0.0}
+                temporalDistortion={0.0} 
                 clearcoat={1}
                 attenuationDistance={5}
                 attenuationColor="#ffffff"
                 color="#ffffff"
-                //@ts-ignore
-                iridescence={0.8}
-                //@ts-ignore
-                iridescenceIOR={1.3}
-                //@ts-ignore
-                iridescenceThicknessRange={[100, 800]}
               />
+              <Edges threshold={1} scale={1.001}>
+                 <meshBasicMaterial color={[3, 3, 3]} toneMapped={false} />
+              </Edges>
            </mesh>
-           
-           <group rotation={cubeRotation}>
-              <Edges color="#ffffff" threshold={15} scale={1} />
 
-              {[0, 1, 2, 3, 4, 5].map((i) => {
-                const rot: [number, number, number] = [0, 0, 0];
-                if (i === 4) rot[0] = Math.PI / 2;
-                else if (i === 5) rot[0] = -Math.PI / 2;
-                else rot[1] = (i * Math.PI) / 2;
-
-                return (
-                  <group key={`face-${i}`} rotation={rot}>
-                    <group position={[0, 0, halfSize * 1.01]}>
-                      <mesh>
-                        <planeGeometry args={[0.4, 0.4]} />
-                        <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
-                      </mesh>
-
-                      {[0, 1].map((r) => (
-                        <group key={`face-blade-${r}`} rotation={[0, 0, r * Math.PI / 2]}>
-                           <mesh>
-                             <shapeGeometry args={[bladeShape]} />
-                             <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
-                           </mesh>
-                           <Line
-                             points={[[0, -halfSize, 0], [0, halfSize, 0]]}
-                             color="#ffffff"
-                             lineWidth={1.5}
-                             transparent
-                             opacity={0.8}
-                           />
-                        </group>
-                      ))}
-                      
-                      {[0, 1, 2, 3].map((side) => (
-                        <group key={`trap-${side}`} rotation={[0, 0, (side * Math.PI) / 2]}>
-                           <mesh>
-                             <shapeGeometry args={[trapShape]} />
-                             <meshBasicMaterial color="#ffffff" transparent opacity={0.4} />
-                           </mesh>
-                           <Line
-                             points={[
-                               [-halfSize, halfSize, 0],
-                               [halfSize, halfSize, 0],
-                               [halfSize * 0.7, halfSize - trapOffset, 0],
-                               [-halfSize * 0.7, halfSize - trapOffset, 0],
-                               [-halfSize, halfSize, 0],
-                             ]}
-                             color="#ffffff"
-                             lineWidth={1}
-                             transparent
-                             opacity={0.8}
-                           />
-                        </group>
-                      ))}
-                    </group>
-                  </group>
-                );
-              })}
+           {/* Middle Cube (Glowing Outlines Only) */}
+           <group ref={innerRef} rotation={cubeRotation}>
+             <mesh>
+               <boxGeometry args={[innerSize, innerSize, innerSize]} />
+               <meshBasicMaterial color="#000000" transparent opacity={0} /> {/* Invisible faces */}
+               <Edges threshold={1} scale={1.001}>
+                 <meshBasicMaterial color={[10, 10, 10]} toneMapped={false} />
+               </Edges>
+             </mesh>
            </group>
+
+           {/* Core Cube (Small Glowing Outline) */}
+           <group ref={coreRef} rotation={cubeRotation}>
+             <mesh>
+               <boxGeometry args={[coreSize * 1.5, coreSize * 1.5, coreSize * 1.5]} />
+               <meshBasicMaterial color="#000000" transparent opacity={0} />
+               <Edges threshold={1} scale={1.001}>
+                 <meshBasicMaterial color={[15, 15, 15]} toneMapped={false} />
+               </Edges>
+             </mesh>
+           </group>
+
         </group>
       </Float>
     </group>
@@ -156,9 +105,6 @@ export default function Home() {
           <pointLight position={[10, 10, 10]} intensity={1} color="#ffffff" />
           
           <Stars radius={300} depth={60} count={20000} factor={8} saturation={0} fade speed={1} />
-          <Sparkles scale={100} count={1000} size={2} speed={0.2} opacity={0.15} color="#ffffff" />
-          <Sparkles scale={50} count={500} size={1} speed={0.1} opacity={0.3} color="#ffffff" />
-          <Sparkles scale={20} count={200} size={1.5} speed={0.3} opacity={0.5} color="#ffffff" />
           
           <Environment resolution={1024}>
             <group rotation={[-Math.PI / 4, 0, 0]}>
@@ -166,7 +112,7 @@ export default function Home() {
                 <sphereGeometry args={[1, 64, 64]} />
                 <meshBasicMaterial color="#000000" side={THREE.BackSide} />
               </mesh>
-              <Sparkles count={2000} scale={100} size={4} speed={0} opacity={1} color="#ffffff" />
+              <Sparkles count={500} scale={50} size={6} speed={0} opacity={1} color="#ffffff" />
             </group>
           </Environment>
 
@@ -174,10 +120,10 @@ export default function Home() {
 
           <EffectComposer enableNormalPass={false}>
             <Bloom 
-              luminanceThreshold={1} 
+              luminanceThreshold={0.5} 
               mipmapBlur 
-              intensity={1.0} 
-              radius={0.3} 
+              intensity={2.0} 
+              radius={0.4} 
             />
           </EffectComposer>
         </Canvas>
