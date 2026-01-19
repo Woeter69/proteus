@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Edges, Float, Stars, Sparkles, MeshTransmissionMaterial, Environment, Line } from "@react-three/drei";
+import { Edges, Float, Stars, Sparkles, MeshTransmissionMaterial, Environment } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 
