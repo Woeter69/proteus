@@ -2,9 +2,16 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
-## [Unreleased] - 2026-01-17
+## [Unreleased] - 2026-01-19
 
 ### Added
+- **Visual Overhaul**: Implemented a "Triple-Nested Tesseract" hero component with:
+    - Outer refractive glass shell with rapid rainbow dispersion.
+    - Middle wireframe cube with glowing HDR outlines.
+    - Inner rotating core cube.
+- **Rendering**: Enhanced 3D scene with high-intensity HDR outlines (`Edges`) and optimized `Bloom` settings for a "dark atmospheric" look.
+
+### Added (Previous)
 - **Visual Enhancements**:
     - Redesigned 3D Cube Hero and decoration components with **true filled glowy trapeziums** and **filled central squares** on each face.
     - Added **Twin Blade Connectors** (long, glowy diamond blades) that link opposite trapeziums across each face, creating an intersecting cross-hair effect.
