@@ -1,88 +1,80 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Edges, Float, Stars, Sparkles, MeshTransmissionMaterial, Environment, Lightformer } from "@react-three/drei";
+import { Float, Stars, Environment, Lightformer } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { useRef } from "react";
 import * as THREE from "three";
 import Link from "next/link";
 
-function FancyCube() {
-  const groupRef = useRef<THREE.Group>(null);
+function IridescentReactor() {
+  const outerRef = useRef<THREE.Mesh>(null);
   const coreRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Group>(null);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(t * 0.1) * 0.2;
-      groupRef.current.rotation.z = Math.cos(t * 0.1) * 0.1;
+    if (outerRef.current) {
+      outerRef.current.rotation.x = t * 0.1;
+      outerRef.current.rotation.y = t * 0.15;
     }
     if (coreRef.current) {
-      coreRef.current.rotation.x = t * 0.5;
-      coreRef.current.rotation.y = t * 0.7;
+      coreRef.current.rotation.x = -t * 0.2;
+      coreRef.current.rotation.z = t * 0.1;
     }
     if (ringRef.current) {
-      ringRef.current.rotation.x = t * 0.2;
-      ringRef.current.rotation.y = t * 0.2;
+      ringRef.current.rotation.y = t * 0.4;
+      ringRef.current.rotation.x = Math.sin(t) * 0.2;
     }
   });
 
   return (
-    <group position={[2.5, 0, 0]} ref={groupRef}>
-      <Float speed={4} rotationIntensity={0.5} floatIntensity={1}>
+    <group position={[2.5, 0, 0]}>
+      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         
-        {/* Outer Glass Cube */}
-        <mesh>
-          <boxGeometry args={[2, 2, 2]} />
-          <MeshTransmissionMaterial 
-            backside
-            samples={16}
-            resolution={1024}
-            transmission={1}
-            roughness={0.05}
-            thickness={2.5}
-            ior={1.7}
-            chromaticAberration={2.0}
-            anisotropy={0.5}
-            distortion={0.5}
-            distortionScale={0.5}
-            temporalDistortion={0.1}
+        {/* Iridescent Outer Shell - Dark base for max rainbow contrast */}
+        <mesh ref={outerRef}>
+          <boxGeometry args={[2.2, 2.2, 2.2]} />
+          <meshPhysicalMaterial
+            transparent
+            transmission={0.8}
+            opacity={1}
+            roughness={0.1}
+            metalness={0.1}
+            ior={1.5}
+            iridescence={1}
+            iridescenceIOR={1.8}
+            iridescenceThicknessRange={[100, 800]}
+            envMapIntensity={1.5}
             clearcoat={1}
-            attenuationDistance={5}
-            attenuationColor="#ffffff"
-            color="#eefbff"
+            color="#101010" 
           />
-          <Edges threshold={1} scale={1.001}>
-            <meshBasicMaterial color="white" transparent opacity={0.2} />
-          </Edges>
         </mesh>
 
-        {/* Inner Reactor Core */}
+        {/* Inner Structure - Gold/Neutral to avoid "Blue Neon" look */}
         <group ref={coreRef}>
-            {/* Glowing Nucleus */}
-            <mesh>
-                <icosahedronGeometry args={[0.5, 1]} />
-                <meshBasicMaterial color={[0, 10, 20]} toneMapped={false} wireframe />
-            </mesh>
-            <mesh>
-                <icosahedronGeometry args={[0.4, 0]} />
-                <meshBasicMaterial color={[0.5, 2, 5]} transparent opacity={0.2} />
-            </mesh>
+          <mesh>
+            <icosahedronGeometry args={[0.7, 0]} />
+            <meshStandardMaterial color="#ffccaa" wireframe emissive="#ff8800" emissiveIntensity={0.5} />
+          </mesh>
+          <mesh>
+            <sphereGeometry args={[0.4, 32, 32]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.2} />
+          </mesh>
         </group>
 
-        {/* Orbiting Rings */}
+        {/* Orbiting Rings - Metallic Silver */}
         <group ref={ringRef}>
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.8, 0.015, 16, 64]} />
-                <meshBasicMaterial color={[2, 10, 20]} toneMapped={false} />
-            </mesh>
-             <mesh rotation={[0, Math.PI / 2, 0]}>
-                <torusGeometry args={[0.7, 0.015, 16, 64]} />
-                <meshBasicMaterial color={[2, 20, 10]} toneMapped={false} />
-            </mesh>
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[1.3, 0.02, 16, 100]} />
+            <meshStandardMaterial color="#aaaaaa" metalness={1} roughness={0.2} />
+          </mesh>
+          <mesh rotation={[0, Math.PI / 2, 0]}>
+            <torusGeometry args={[1.1, 0.02, 16, 100]} />
+            <meshStandardMaterial color="#aaaaaa" metalness={1} roughness={0.2} />
+          </mesh>
         </group>
-        
+
       </Float>
     </group>
   );
@@ -99,29 +91,29 @@ export default function Home() {
           dpr={[1, 2]}
           camera={{ position: [0, 0, 8], fov: 40 }}
         >
-          <ambientLight intensity={0.2} />
-          <pointLight position={[20, 20, 20]} intensity={0.5} color="#ffffff" />
+          <ambientLight intensity={0.5} />
           
-          <Stars radius={300} depth={60} count={20000} factor={8} saturation={0} fade speed={1} />
-          
+          {/* Neutral white lighting */}
           <Environment resolution={1024}>
             <color attach="background" args={["#000000"]} />
-            {/* BAKING STARS INTO ENVIRONMENT FOR REFRACTION */}
             <group rotation={[0, 0, 0]}>
                <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-               {/* Bright Sparkles to create sharp Chromatic Aberration points */}
-               <Sparkles count={1000} scale={150} size={15} speed={0} opacity={1} color="#ffffff" />
-               <Sparkles count={500} scale={100} size={25} speed={0} opacity={1} color="#ffeebb" />
+               
+               {/* Broad White Lightformers to drive the Iridescence Gradient */}
+               <Lightformer form="rect" intensity={5} position={[5, 5, 5]} scale={[10, 10, 1]} color="white" />
+               <Lightformer form="rect" intensity={5} position={[-5, 5, 5]} scale={[10, 10, 1]} color="white" />
+               <Lightformer form="rect" intensity={5} position={[0, -5, 5]} scale={[10, 10, 1]} color="white" />
+               <Lightformer form="circle" intensity={2} position={[0, 0, -10]} scale={[20, 20, 1]} color="white" />
             </group>
           </Environment>
           
-          <FancyCube />
+          <IridescentReactor />
 
           <EffectComposer enableNormalPass={false}>
             <Bloom 
-              luminanceThreshold={0.5} 
+              luminanceThreshold={0.8} 
               mipmapBlur 
-              intensity={2.0} 
+              intensity={0.5} 
               radius={0.4} 
             />
           </EffectComposer>
