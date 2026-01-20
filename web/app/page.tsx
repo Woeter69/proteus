@@ -28,47 +28,25 @@ function IridescentReactor() {
           <MeshTransmissionMaterial
             backside
             samples={16}
-            resolution={1024}
+            resolution={512}
             transmission={1}
-            thickness={1.5}
-            roughness={0.05}
-            chromaticAberration={0.8}
-            anisotropy={0.1}
-            distortion={1.2}
-            distortionScale={1.0}
-            temporalDistortion={0.4}
+            thickness={2.5}
+            roughness={0.0}
+            chromaticAberration={1.5}
+            anisotropy={0.3}
+            distortion={1.5}
+            distortionScale={0.3}
+            temporalDistortion={0.2}
             ior={1.7}
             color="#ffffff"
             attenuationDistance={1}
             attenuationColor="#ffffff"
+            envMapIntensity={0.5}
           />
           <Edges color="white" scale={1.02} threshold={1} />
         </mesh>
 
       </Float>
-    </group>
-  );
-}
-
-function ManualStars() {
-  // Generate random positions for stars
-  const stars = new Array(200).fill(0).map(() => ({
-    pos: [
-      (Math.random() - 0.5) * 20,
-      (Math.random() - 0.5) * 20,
-      (Math.random() - 0.5) * 20
-    ] as [number, number, number],
-    scale: Math.random() * 0.05 + 0.02
-  }));
-
-  return (
-    <group>
-      {stars.map((s, i) => (
-        <mesh key={i} position={s.pos}>
-          <sphereGeometry args={[s.scale, 8, 8]} />
-          <meshBasicMaterial color="white" toneMapped={false} />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -86,12 +64,12 @@ export default function Home() {
         >
           <ambientLight intensity={0.5} />
           
-          {/* Background Stars (Visual) */}
-          <Stars radius={100} depth={50} count={5000} factor={6} saturation={0} fade speed={1} />
+          {/* Background Stars (Visual - Fixed in space) */}
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
-          {/* Reflection Environment (Actual bright objects) */}
+          {/* Reflection Environment (What the glass sees) */}
           <Environment resolution={1024}>
-            <ManualStars />
+            {/* Pure black environment to ensure only background stars are refracted */}
             <color attach="background" args={["#000000"]} />
           </Environment>
           
