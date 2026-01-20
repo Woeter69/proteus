@@ -22,26 +22,26 @@ function IridescentReactor() {
     <group position={[2.5, 0, 0]}>
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
         
-        {/* Glass Cube with Chromatic Aberration */}
+        {/* Heavy Optical Glass Cube */}
         <mesh ref={outerRef}>
           <boxGeometry args={[2.2, 2.2, 2.2]} />
           <MeshTransmissionMaterial
             backside
             samples={16}
-            resolution={512}
+            resolution={1024}
             transmission={1}
-            thickness={2.5}
-            roughness={0.0}
-            chromaticAberration={1.5}
-            anisotropy={0.3}
-            distortion={1.5}
-            distortionScale={0.3}
-            temporalDistortion={0.2}
-            ior={1.7}
+            thickness={2.0}
+            roughness={0.05}
+            chromaticAberration={0.6}
+            anisotropy={0.1}
+            distortion={0.5}
+            distortionScale={0.5}
+            temporalDistortion={0.05}
+            ior={1.5}
             color="#ffffff"
-            attenuationDistance={1}
+            attenuationDistance={0.5}
             attenuationColor="#ffffff"
-            envMapIntensity={0.5}
+            envMapIntensity={1}
           />
           <Edges color="white" scale={1.02} threshold={1} />
         </mesh>
