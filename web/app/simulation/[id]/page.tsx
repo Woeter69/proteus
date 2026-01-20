@@ -7,6 +7,28 @@ import { Canvas } from "@react-three/fiber";
 import { Edges, Line, Stars, Sparkles, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
+function ManualStars() {
+  const stars = new Array(100).fill(0).map(() => ({
+    pos: [
+      (Math.random() - 0.5) * 10,
+      (Math.random() - 0.5) * 10,
+      (Math.random() - 0.5) * 10
+    ] as [number, number, number],
+    scale: Math.random() * 0.05 + 0.02
+  }));
+
+  return (
+    <group>
+      {stars.map((s, i) => (
+        <mesh key={i} position={s.pos}>
+          <sphereGeometry args={[s.scale, 8, 8]} />
+          <meshBasicMaterial color="white" toneMapped={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function DecorationCube() {
   const size = 1.5;
   const halfSize = size / 2;
@@ -37,11 +59,16 @@ function DecorationCube() {
       <mesh>
         <boxGeometry args={[size, size, size]} />
         <meshPhysicalMaterial 
-          color="#000000" 
-          emissive="#4444ff"
-          emissiveIntensity={0.1}
-          transparent
-          opacity={0.8}
+          color="#000000"
+          transmission={0}
+          roughness={0}
+          metalness={0}
+          ior={1.5}
+          iridescence={1}
+          iridescenceIOR={1.8}
+          iridescenceThicknessRange={[100, 400]}
+          envMapIntensity={2}
+          clearcoat={1}
         />
         <Edges color="#4444ff" threshold={15} scale={1} />
       </mesh>
@@ -186,6 +213,10 @@ export default function SimulationResultPage() {
         <div className="h-12 w-12">
            <Canvas camera={{ position: [0, 0, 4] }}>
               <ambientLight intensity={0.5} />
+              <Environment resolution={1024}>
+                 <ManualStars />
+                 <color attach="background" args={["#000000"]} />
+              </Environment>
               <DecorationCube />
            </Canvas>
         </div>

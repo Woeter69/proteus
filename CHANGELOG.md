@@ -2,6 +2,22 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [Unreleased] - 2026-01-20
+
+### Added
+- **UI Consistency**: Applied Iridescence effect (`meshPhysicalMaterial` with iridescence) to the navigation `DecorationCube` in simulation pages to match the hero visualization style.
+
+### Changed
+- **Visuals**: Removed orbiting rings from the main 3D Hero visualization (`IridescentReactor`) for a cleaner look.
+- **Visuals**: Removed the inner structure (icosahedron and sphere) from the main 3D Hero cube.
+- **Visuals**: Enhanced Iridescence effect to use true thin-film interference physics (soap bubble spectrum) by adjusting `iridescenceIOR` to 1.33 and adding volume/thickness.
+- **Visuals**: Removed `Lightformer` elements to prevent white washout and reflection blowouts, ensuring clear rainbow dispersion.
+- **Visuals**: Fixed "milky" appearance of the iridescent cube by setting base color to black.
+- **Visuals**: Replaced `Stars` component in reflection environment with a custom **Manual Star Field** (scattered bright spheres) to guarantee visibility in reflections.
+- **Visuals**: Optimized iridescence (`iridescenceIOR: 1.8`, `range: [100, 400]`) to create a **prismatic chromatic aberration effect** on reflected star light, causing the star reflections to split into rainbow spectrums.
+- **Visuals**: Removed refraction (opaque black base) for ultra-sharp star reflections.
+- **Visuals**: Added glowy white `<Edges />` to the Hero Cube to enhance visibility and aesthetics.
+
 ## [Unreleased] - 2026-01-19
 
 ### Added
