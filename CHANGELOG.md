@@ -2,10 +2,24 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
-## [Unreleased] - 2026-01-20
-
+## [1.1.0] - 2026-01-20
 ### Added
-- **UI Consistency**: Applied Iridescence effect (`meshPhysicalMaterial` with iridescence) to the navigation `DecorationCube` in simulation pages to match the hero visualization style.
+- **CHONS Forcefield**: Comprehensive support for Carbon, Hydrogen, Oxygen, Nitrogen, and Sulfur using OPLS-AA parameters.
+- **Angle Generation**: Automatic detection and harmonic angle coefficient application for more realistic polymer structures.
+- **Bond Order Support**: Differentiates between Single, Double, and Triple bonds with specific harmonic constants.
+- **The Payload (Drug Encapsulation)**: New `--payload` and `--payload_count` flags to simulate drug molecules within the polymer solvent.
+- **Improved Topology**: Switched to individual molecule embedding and random spatial distribution to prevent high-energy overlaps and LAMMPS "missing atom" crashes.
+- **Advanced Physics Control**: Exposed `--temp`, `--damp`, `--timestep`, and `--padding` to the CLI for fine-tuned simulation control.
+
+### Changed
+- Refactored `src/topology.py` to handle mixed-molecule systems robustly.
+- Updated `src/simulation.py` to handle multi-type bond and pair coefficients with arithmetic mixing.
+- Enhanced `run.sh` to support both legacy and advanced pass-through command styles.
+
+### Fixed
+- Fixed LAMMPS "Missing Atoms" crash caused by high-energy initial overlaps in multi-molecule simulations.
+- Fixed string interpolation bug in `simulation.py` for the timestep variable.
+
 
 ### Changed
 - **Visuals**: Removed orbiting rings from the main 3D Hero visualization (`IridescentReactor`) for a cleaner look.

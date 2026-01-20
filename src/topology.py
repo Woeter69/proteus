@@ -9,139 +9,131 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 import numpy as np
 
-def generate_topology(smiles: str, output_path: Path, padding: float = 10.0):
+def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
     """
-    Generates a LAMMPS data file from a SMILES string using a generic force field estimation.
-
-    Args:
-        smiles (str): The SMILES string of the polymer/molecule.
-        output_path (Path): Path to save the 'polymer.data' file.
-        padding (float): Padding in Angstroms to add around the molecule for the simulation box.
+    Generates a LAMMPS data file. 
+    Embeds each molecule individually and places them randomly.
     """
     print(f"[*] Generating topology for SMILES: {smiles}")
     
-    # 1. RDKit Molecule Generation
-    mol = Chem.MolFromSmiles(smiles)
-    if not mol:
-        print("Error: RDKit failed to parse SMILES string.")
+    individual_smiles = smiles.split('.')
+    all_mols = []
+    
+    for s in individual_smiles:
+        mol = Chem.MolFromSmiles(s)
+        if not mol: continue
+        mol = Chem.AddHs(mol)
+        AllChem.EmbedMolecule(mol, randomSeed=42)
+        try:
+            AllChem.UFFOptimizeMolecule(mol, maxIters=100)
+        except:
+            pass
+        all_mols.append(mol)
+
+    if not all_mols:
+        print("Error: No valid molecules generated.")
         sys.exit(1)
+
+    # Element/Bond/Angle Mappings
+    element_map = {'C': 1, 'H': 2, 'O': 3, 'N': 4, 'S': 5}
+    mass_map = {1: 12.011, 2: 1.008, 3: 15.999, 4: 14.007, 5: 32.06}
     
-    mol = Chem.AddHs(mol)
+    def get_bond_type(bond):
+        bt = bond.GetBondType()
+        if bt == Chem.rdchem.BondType.SINGLE: return 1
+        if bt == Chem.rdchem.BondType.DOUBLE: return 2
+        if bt == Chem.rdchem.BondType.TRIPLE: return 3
+        return 4
+
+    total_atoms = []
+    total_bonds = []
+    total_angles = []
     
-    # 2. 3D Embedding (Improved for long chains)
-    # Using direct kwargs for maximum compatibility across RDKit versions
-    print(f"[*] Attempting 3D embedding (max 5000 attempts)...")
+    # Box Calculation
+    # Estimate box size based on number of molecules
+    box_size = (len(all_mols) ** (1/3)) * 15.0 + padding
     
-    # Try with robust settings
-    status = AllChem.EmbedMolecule(
-        mol, 
-        randomSeed=42, 
-        maxAttempts=5000, 
-        useRandomCoords=True
-    )
-    
-    if status != 0:
-        print("Warning: Standard embedding failed. Retrying with loose constraints...")
-        # Fallback: try without random coords or just more attempts
-        status = AllChem.EmbedMolecule(
-            mol, 
-            randomSeed=42, 
-            maxAttempts=10000,
-            useRandomCoords=True,
-            clearConfs=True
-        )
+    atom_offset = 0
+    for mol_idx, mol in enumerate(all_mols):
+        AllChem.ComputeGasteigerCharges(mol)
+        conf = mol.GetConformer()
         
-        if status != 0:
-            print("Critical Error: RDKit could not fold this polymer in 3D.")
-            print("Tip: Try a shorter chain or check if the SMILES is valid.")
-            sys.exit(1)
-
-    # Optimize geometry slightly to prevent severe clashes
-    try:
-        AllChem.UFFOptimizeMolecule(mol, maxIters=200)
-    except Exception as e:
-        print(f"Warning: UFF Optimization failed ({e}), proceeding with raw coords.")
-
-    conf = mol.GetConformer()
-    
-    # 3. Analyze Topology for LAMMPS
-    atoms = mol.GetAtoms()
-    bonds = mol.GetBonds()
-    
-    print(f"[*] Molecule generated with {len(atoms)} atoms and {len(bonds)} bonds.")
-
-    # Map elements to LAMMPS types
-    # Simple mapping: C=1, H=2, O=3, N=4, others sequential
-    element_map = {'C': 1, 'H': 2, 'O': 3, 'N': 4}
-    next_type = 5
-    
-    atom_types_map = {} # atomic_num -> lammps_type
-    mass_map = {}       # lammps_type -> mass
-    
-    # Pre-scan atoms to build maps
-    for atom in atoms:
-        symbol = atom.GetSymbol()
-        mass = atom.GetMass()
-        if symbol in element_map:
-            l_type = element_map[symbol]
-        else:
-            if symbol not in [k for k,v in element_map.items() if v >= 5]:
-                element_map[symbol] = next_type
-                next_type += 1
-            l_type = element_map[symbol]
+        # Random Translation
+        offset = (np.random.rand(3) - 0.5) * box_size * 0.8
         
-        atom_types_map[atom.GetAtomicNum()] = l_type
-        mass_map[l_type] = mass
+        for i, atom in enumerate(mol.GetAtoms()):
+            pos = conf.GetAtomPosition(i)
+            total_atoms.append({
+                'id': atom_offset + i + 1,
+                'mol': mol_idx + 1,
+                'type': element_map.get(atom.GetSymbol(), 1),
+                'q': float(atom.GetProp('_GasteigerCharge')) if atom.HasProp('_GasteigerCharge') else 0.0,
+                'x': pos.x + offset[0],
+                'y': pos.y + offset[1],
+                'z': pos.z + offset[2]
+            })
+            
+        for bond in mol.GetBonds():
+            total_bonds.append({
+                'type': get_bond_type(bond),
+                'a1': bond.GetBeginAtomIdx() + atom_offset + 1,
+                'a2': bond.GetEndAtomIdx() + atom_offset + 1
+            })
+            
+        # Detect Angles
+        for atom in mol.GetAtoms():
+            idx = atom.GetIdx()
+            neighbors = [n.GetIdx() for n in atom.GetNeighbors()]
+            if len(neighbors) >= 2:
+                import itertools
+                for a1, a2 in itertools.combinations(neighbors, 2):
+                    total_angles.append({
+                        'type': 1,
+                        'a1': a1 + atom_offset + 1,
+                        'a2': idx + atom_offset + 1,
+                        'a3': a2 + atom_offset + 1
+                    })
+        
+        atom_offset += mol.GetNumAtoms()
 
-    num_atom_types = len(mass_map)
-    num_bond_types = 1 # Generic bond
-    
-    # Calculate Box Bounds
-    positions = conf.GetPositions()
-    min_xyz = positions.min(axis=0) - padding
-    max_xyz = positions.max(axis=0) + padding
-    
-    # 4. Write LAMMPS Data File
+    # Write File
+    half_box = box_size / 2.0
     with open(output_path, 'w') as f:
-        f.write(f"LAMMPS data file generated by Proteus for {smiles}\n\n")
-        
-        f.write(f"{mol.GetNumAtoms()} atoms\n")
-        f.write(f"{mol.GetNumBonds()} bonds\n")
-        f.write("0 angles\n0 dihedrals\n0 impropers\n\n")
-        
-        f.write(f"{num_atom_types} atom types\n")
-        f.write(f"{num_bond_types} bond types\n\n")
-        
-        f.write(f"{min_xyz[0]:.4f} {max_xyz[0]:.4f} xlo xhi\n")
-        f.write(f"{min_xyz[1]:.4f} {max_xyz[1]:.4f} ylo yhi\n")
-        f.write(f"{min_xyz[2]:.4f} {max_xyz[2]:.4f} zlo zhi\n\n")
+        f.write(f"LAMMPS data file: {smiles}\n\n")
+        f.write(f"{len(total_atoms)} atoms\n")
+        f.write(f"{len(total_bonds)} bonds\n")
+        f.write(f"{len(total_angles)} angles\n\n")
+        f.write(f"5 atom types\n4 bond types\n1 angle types\n\n")
+        f.write(f"{-half_box:.4f} {half_box:.4f} xlo xhi\n")
+        f.write(f"{-half_box:.4f} {half_box:.4f} ylo yhi\n")
+        f.write(f"{-half_box:.4f} {half_box:.4f} zlo zhi\n\n")
         
         f.write("Masses\n\n")
-        for l_type, mass in sorted(mass_map.items()):
-            f.write(f"{l_type} {mass:.4f} # {list(element_map.keys())[list(element_map.values()).index(l_type)]}\n")
+        for t, m in sorted(mass_map.items()):
+            f.write(f"{t} {m}\n")
         f.write("\n")
         
         f.write("Atoms # full\n\n")
-        # atom-ID molecule-ID atom-type q x y z
-        for i, atom in enumerate(atoms):
-            idx = i + 1
-            l_type = atom_types_map[atom.GetAtomicNum()]
-            pos = positions[i]
-            # Generic charge 0.0 for now as requested by "generic writer" simplification
-            # or partial charges could be calculated via RDKit Gasteiger
-            AllChem.ComputeGasteigerCharges(mol)
-            q = float(atom.GetProp('_GasteigerCharge')) if atom.HasProp('_GasteigerCharge') else 0.0
-            
-            f.write(f"{idx} 1 {l_type} {q:.5f} {pos[0]:.5f} {pos[1]:.5f} {pos[2]:.5f}\n")
+        for a in total_atoms:
+            f.write(f"{a['id']} {a['mol']} {a['type']} {a['q']:.5f} {a['x']:.5f} {a['y']:.5f} {a['z']:.5f}\n")
         f.write("\n")
         
         f.write("Bonds\n\n")
-        # ID type atom1 atom2
-        for i, bond in enumerate(bonds):
-            idx = i + 1
-            a1 = bond.GetBeginAtomIdx() + 1
-            a2 = bond.GetEndAtomIdx() + 1
-            f.write(f"{idx} 1 {a1} {a2}\n")
+        for i, b in enumerate(total_bonds):
+            f.write(f"{i+1} {b['type']} {b['a1']} {b['a2']}\n")
+        f.write("\n")
+        
+        f.write("Angles\n\n")
+        for i, ang in enumerate(total_angles):
+            f.write(f"{i+1} {ang['type']} {ang['a1']} {ang['a2']} {ang['a3']}\n")
+            
+    print(f"[*] Topology written to {output_path}")
+    return element_map, mass_map
+
+            
+    print(f"[*] Topology written to {output_path}")
+    return element_map, mass_map
+
             
     print(f"[*] Topology written to {output_path}")
     return element_map, mass_map

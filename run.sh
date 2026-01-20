@@ -1,22 +1,55 @@
 #!/bin/bash
 # Helper script to run Proteus
-# Usage: ./run.sh <SMILES> <NAME> [STEPS] [COUNT]
+# Usage Legacy: ./run.sh <SMILES> <NAME> [STEPS] [COUNT] [EXTRA_ARGS...]
+# Usage Advanced: ./run.sh --smiles <SMILES> --name <NAME> ...
 
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <SMILES> <NAME> [STEPS] [COUNT]"
+if [ "$#" -eq 0 ]; then
+    echo "Usage Legacy: $0 <SMILES> <NAME> [STEPS] [COUNT]"
+    echo "Usage Advanced: $0 --smiles <SMILES> ... (Pass any main.py flags)"
+    echo "New Variables available: --temp, --damp, --epsilon, --sigma, --timestep, --padding"
+    echo "Payload Variables: --payload <SMILES>, --payload_count <N>"
     exit 1
 fi
 
-SMILES=$1
-NAME=$2
-STEPS=${3:-10000} # Default 10k steps
-COUNT=${4:-1}     # Default 1 molecule
+# Check if first argument is a flag (Advanced Mode)
+if [[ "$1" == --* ]]; then
+    echo "Running in Advanced Mode (Pass-through)..."
+    conda run --no-capture-output -n proteus_env python main.py "$@"
+else
+    # Legacy Mode with optional extras
+    SMILES=$1
+    NAME=$2
+    
+    # Check if $3 is a number (STEPS)
+    if [[ "$3" =~ ^[0-9]+$ ]]; then
+        STEPS=$3
+        shift 3
+        # Check if $1 (originally $4) is a number (COUNT)
+        if [[ "$1" =~ ^[0-9]+$ ]]; then
+            COUNT=$1
+            shift
+        else
+            COUNT=1
+        fi
+    else
+        STEPS=10000
+        COUNT=1
+        shift 2
+    fi
+    
+    # Remaining arguments in $@ are passed as extra flags
+    echo "Running Proteus (Legacy Mode):"
+    echo "  Polymer: $SMILES"
+    echo "  Job Name: $NAME"
+    echo "  Duration: $STEPS steps"
+    echo "  Copies:  $COUNT"
+    echo "  Extra Args: $@"
 
-echo "Running Proteus:"
-echo "  Polymer: $SMILES"
-echo "  Copies:  $COUNT"
-echo "  Job Name: $NAME"
-echo "  Duration: $STEPS steps"
-
-# Use 'conda run' which works in scripts without needing 'conda activate' or 'conda init'
-conda run --no-capture-output -n proteus_env python main.py --smiles "$SMILES" --name "$NAME" --steps "$STEPS" --count "$COUNT" --render
+    conda run --no-capture-output -n proteus_env python main.py \
+        --smiles "$SMILES" \
+        --name "$NAME" \
+        --steps "$STEPS" \
+        --count "$COUNT" \
+        --render \
+        "$@"
+fi

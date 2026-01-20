@@ -18,16 +18,32 @@ def main():
     parser.add_argument("--name", type=str, default="simulation", help="Name of the simulation run")
     parser.add_argument("--steps", type=int, default=10000, help="Number of simulation steps")
     parser.add_argument("--count", type=int, default=1, help="Number of copies of the molecule to simulate")
+    parser.add_argument("--payload", type=str, default=None, help="SMILES of the drug/payload molecule (Optional)")
+    parser.add_argument("--payload_count", type=int, default=1, help="Number of payload molecules")
     parser.add_argument("--render", action="store_true", help="Render a GIF of the simulation (requires Ovito)")
+    
+    # Advanced Physics Parameters
+    parser.add_argument("--temp", type=float, default=300.0, help="Temperature (K)")
+    parser.add_argument("--damp", type=float, default=20.0, help="Langevin damping parameter (fs). Lower = higher viscosity.")
+    parser.add_argument("--epsilon", type=float, default=0.105, help="LJ Epsilon (interaction strength)")
+    parser.add_argument("--sigma", type=float, default=2.5, help="LJ Sigma (particle size)")
+    parser.add_argument("--timestep", type=float, default=1.0, help="Simulation timestep (fs)")
+    parser.add_argument("--padding", type=float, default=20.0, help="Simulation box padding (Angstroms)")
+
     parser.add_argument("--version", action="version", version="%(prog)s v1.0.0")
     
     args = parser.parse_args()
     
     # Handle Molecule Count
-    if args.count > 1:
-        print(f"[*] Replicating molecule {args.count} times...")
-        # "CCO" * 3 -> "CCO.CCO.CCO"
-        args.smiles = ".".join([args.smiles] * args.count)
+    monomer_smiles = ".".join([args.smiles] * args.count)
+    
+    # Handle Payload
+    if args.payload:
+        print(f"[*] Adding Payload: {args.payload} (x{args.payload_count})")
+        payload_smiles = ".".join([args.payload] * args.payload_count)
+        args.smiles = f"{monomer_smiles}.{payload_smiles}"
+    else:
+        args.smiles = monomer_smiles
     
     # Setup Paths
     base_dir = Path(__file__).parent
@@ -46,14 +62,24 @@ def main():
     
     # 1. Topology
     try:
-        topology.generate_topology(args.smiles, data_file)
+        topology.generate_topology(args.smiles, data_file, padding=args.padding)
     except Exception as e:
         print(f"Topology Generation Failed: {e}")
         sys.exit(1)
         
     # 2. Simulation Setup & Run
     try:
-        simulation.generate_input_file(data_file, input_file, dump_file, steps=args.steps)
+        simulation.generate_input_file(
+            data_file, 
+            input_file, 
+            dump_file, 
+            steps=args.steps,
+            temp=args.temp,
+            damp=args.damp,
+            epsilon=args.epsilon,
+            sigma=args.sigma,
+            timestep=args.timestep
+        )
         simulation.run_simulation(input_file, log_file)
     except Exception as e:
         print(f"Simulation Failed: {e}")

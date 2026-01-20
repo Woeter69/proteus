@@ -9,3 +9,6 @@
 - Initial implementation focused on automated SMILES-to-MD pipeline.
 - Added Ovito integration for high-quality, color-coded GIF visualization.
 - Roadmap includes Web Interface, AI Prediction, and Optional Payload simulation.
+
+## Documentation Rules
+- **Variables**: `VARIABLES.md` is the Single Source of Truth for simulation parameters. If a new CLI argument or physics variable is added, it **MUST** be added to `VARIABLES.md` in the same turn.
