@@ -17,3 +17,5 @@ dependencies:
   - pip
   - pip:
     - ovito
+    - fastapi-mail
+    - psycopg2-binary

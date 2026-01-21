@@ -30,6 +30,28 @@ Proteus uses **Conda** to manage dependencies (Python, RDKit, LAMMPS, NumPy).
     pip install ovito
     ```
 
+## Database Configuration
+
+Proteus supports both **SQLite** (default, file-based) and **PostgreSQL** (production).
+
+### Using SQLite (Default)
+No setup required. The database is stored in `data/proteus.db`.
+
+### Using PostgreSQL (Recommended)
+1.  **Start the Database:**
+    ```bash
+    docker compose up -d
+    ```
+2.  **Configure Environment:**
+    Create a `.env` file in the root directory:
+    ```bash
+    DATABASE_URL=postgresql://proteus:proteus_password@localhost:5432/proteus_db
+    ```
+3.  **Update Environment:**
+    ```bash
+    conda env update -f environment.yml
+    ```
+
 ## Usage
 
 The easiest way to run the pipeline is using the `run.sh` helper script.
