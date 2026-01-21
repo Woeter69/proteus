@@ -8,6 +8,7 @@ class Simulation(Base):
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String, unique=True, index=True, nullable=False) # Celery Task ID
     name = Column(String, index=True)
+    user_email = Column(String, nullable=True)
     smiles = Column(String, nullable=False)
     status = Column(String, default="PENDING") # PENDING, PROGRESS, COMPLETED, FAILED
     
