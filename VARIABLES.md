@@ -26,8 +26,8 @@ This document serves as the single source of truth for all configurable variable
 
 | Flag | Variable | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `--epsilon` | `epsilon` | `0.105` | **Interaction Strength**. Depth of the potential well. |
-| `--sigma` | `sigma` | `2.5` | **Particle Size (Å)**. Distance where potential is zero. |
+| `--epsilon` | `epsilon` | `OPLS-AA` | **Interaction Strength**. If not set, uses real-world defaults for CHONS. |
+| `--sigma` | `sigma` | `OPLS-AA` | **Particle Size (Å)**. If not set, uses real-world defaults for CHONS. |
 
 ## Visualization
 | Flag | Variable | Default | Description |
