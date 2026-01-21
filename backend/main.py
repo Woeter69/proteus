@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from sqlalchemy.orm import Session
 import sys
 from pathlib import Path
@@ -38,6 +39,7 @@ app.add_middleware(
 class SimulationRequest(BaseModel):
     smiles: str
     name: str = "simulation"
+    email: Optional[str] = None
     steps: int = 10000
     count: int = 1
     render: bool = False
@@ -68,6 +70,7 @@ def trigger_simulation(request: SimulationRequest, db: Session = Depends(get_db)
     db_sim = models.Simulation(
         task_id=task.id,
         name=request.name,
+        user_email=request.email,
         smiles=request.smiles,
         steps=request.steps,
         count=request.count,

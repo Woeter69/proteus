@@ -9,6 +9,7 @@ from backend.celery_app import celery_app
 from src import topology, simulation, analysis, visualization
 from backend.database import SessionLocal
 from backend.models import Simulation
+from backend.email_service import send_simulation_complete_email
 
 @celery_app.task(bind=True)
 def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count: int = 1, render: bool = False):
@@ -45,23 +46,34 @@ def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count:
     
     # 1. Topology
     try:
-        topology.generate_topology(smiles, data_file)
+        bond_params, angle_params = topology.generate_topology(smiles, data_file)
     except Exception as e:
         if db_sim:
             db_sim.status = "FAILED"
             db.commit()
+            if db_sim.user_email:
+                send_simulation_complete_email(db_sim.user_email, db_sim.name, db_sim.id, "FAILED")
         return {'status': 'Failed', 'error': f"Topology Generation Failed: {e}"}
         
     self.update_state(state='PROGRESS', meta={'status': 'Running Simulation'})
 
     # 2. Simulation Setup & Run
     try:
-        simulation.generate_input_file(data_file, input_file, dump_file, steps=steps)
+        simulation.generate_input_file(
+            data_file, 
+            input_file, 
+            dump_file, 
+            steps=steps,
+            bond_params=bond_params,
+            angle_params=angle_params
+        )
         simulation.run_simulation(input_file, log_file)
     except Exception as e:
         if db_sim:
             db_sim.status = "FAILED"
             db.commit()
+            if db_sim.user_email:
+                send_simulation_complete_email(db_sim.user_email, db_sim.name, db_sim.id, "FAILED")
         return {'status': 'Failed', 'error': f"Simulation Failed: {e}"}
         
     self.update_state(state='PROGRESS', meta={'status': 'Analyzing Results'})
@@ -76,6 +88,8 @@ def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count:
         if db_sim:
             db_sim.status = "FAILED"
             db.commit()
+            if db_sim.user_email:
+                send_simulation_complete_email(db_sim.user_email, db_sim.name, db_sim.id, "FAILED")
         return {'status': 'Failed', 'error': f"Analysis Failed: {e}"}
 
     # 4. Visualization (Optional)
@@ -97,6 +111,10 @@ def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count:
         if render:
             db_sim.gif_path = str(gif_file)
         db.commit()
+        
+        # Send Notification
+        if db_sim.user_email:
+            send_simulation_complete_email(db_sim.user_email, db_sim.name, db_sim.id, "COMPLETED")
     
     db.close()
 
