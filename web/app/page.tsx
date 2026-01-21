@@ -6,6 +6,7 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { useRef } from "react";
 import * as THREE from "three";
 import Link from "next/link";
+import { ColorBendsR3F } from "../components/ColorBendsR3F";
 
 function IridescentReactor() {
   const outerRef = useRef<THREE.Mesh>(null);
@@ -64,6 +65,16 @@ export default function Home() {
         >
           <ambientLight intensity={0.5} />
           
+          <ColorBendsR3F
+            colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+            rotation={45}
+            speed={0.15}
+            scale={1.2}
+            frequency={1.5}
+            warpStrength={1.2}
+            noise={0.05}
+          />
+
           {/* Background Stars (Visual - Fixed in space) */}
           <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
