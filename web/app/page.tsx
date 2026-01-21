@@ -109,9 +109,9 @@ export default function Home() {
           <Link href="/simulation" className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all glow-box">
             Start Simulation
           </Link>
-          <button className="px-8 py-3 border border-white text-white font-bold rounded-full hover:bg-white/10 transition-all">
+          <Link href="/docs" className="px-8 py-3 border border-white text-white font-bold rounded-full hover:bg-white/10 transition-all">
             Documentation
-          </button>
+          </Link>
         </div>
       </div>
 

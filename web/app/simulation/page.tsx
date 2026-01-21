@@ -193,6 +193,7 @@ function RecentSimulations() {
 export default function SimulationPage() {
   const [smiles, setSmiles] = useState("");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -212,6 +213,7 @@ export default function SimulationPage() {
         body: JSON.stringify({
           smiles,
           name: name || `sim_${Date.now()}`, 
+          email: email || null,
           render: true 
         }),
       });
@@ -225,6 +227,7 @@ export default function SimulationPage() {
       // Clear form on success
       setSmiles("");
       setName("");
+      setEmail("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
@@ -289,6 +292,20 @@ export default function SimulationPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., PEO_Oligomer"
+                className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
+                Email Notification (Optional)
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="notify@example.com"
                 className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all"
               />
             </div>
