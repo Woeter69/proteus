@@ -2,6 +2,21 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [1.2.0] - 2026-01-21
+### Added
+- **Email Notifications**: Implemented automated HTML email alerts for completed or failed simulations using `smtplib` (Backend) and a new user input field (Frontend).
+- **PostgreSQL Support**: Added production-grade database support. Users can now choose between SQLite (default) and PostgreSQL via `DATABASE_URL`.
+- **Docker Infrastructure**: Added `docker-compose.yml` to spin up PostgreSQL and Redis services.
+- **Documentation Site**: Created a comprehensive `/docs` page in the Web Interface, aggregating info from all markdown files into a navigable UI.
+- **Environment Config**: Added `.env.example` to document all required environment variables for Email, Database, and App settings.
+- **Dynamic Geometry**: Refactored the pipeline to automatically detect and map unique bond lengths and angles from RDKit structures. No more "exploding" molecules due to uniform C-H bond lengths.
+- **Physics Refinement**: Integrated `special_bonds` scaling for 1-4 interactions and dynamic LJ cutoffs based on atom size.
+
+### Changed
+- **Database Schema**: Added `user_email` column to the `Simulation` table.
+- **Environment**: Added `psycopg2-binary` and `fastapi-mail` (placeholder) dependencies to `environment.yml`.
+- **Frontend**: Updated Landing Page to link to the new Documentation section.
+
 ## [1.1.0] - 2026-01-20
 ### Added
 - **CHONS Forcefield**: Comprehensive support for Carbon, Hydrogen, Oxygen, Nitrogen, and Sulfur using OPLS-AA parameters.

@@ -34,15 +34,19 @@
 
 ## Future Roadmap (Planned)
 
-### Phase 1: Web Interface (Simulation-as-a-Service) - **[IN PROGRESS]**
+### Phase 1: Web Interface (Simulation-as-a-Service) - **[COMPLETE]**
 - [x] **Architecture Setup**: Established Monorepo (FastAPI + Next.js).
 - [x] **Landing Page**: Implemented "Black & Glowy" 3D Hero section.
-- [ ] **Goal**: Allow remote users to submit simulation requests via a browser.
-- [ ] **Backend**: Create a Job Queue system (Redis/Celery) to manage simulation load on the host device.
-- [ ] **Database**: Implement a SQL database to store SMILES inputs, user details, and simulation results (Trajectory/$R_g$).
-- [ ] **Notification**: Email/Dashboard alerts when the simulation finishes.
+- [x] **Goal**: Allow remote users to submit simulation requests via a browser.
+- [x] **Backend**: Create a Job Queue system (Redis/Celery) to manage simulation load on the host device.
+- [x] **Database**: Implement a SQL database to store SMILES inputs, user details, and simulation results (Trajectory/$R_g$).
+- [x] **Notification**: Email/Dashboard alerts when the simulation finishes.
 
-### Phase 2: AI-Driven Materials Discovery
+### Phase 2: AI-Driven Materials Discovery - **[IN PROGRESS]**
+- [ ] **Goal**: Predict nanoparticle formation instantly without running full physics simulations.
+- [x] **Data Strategy**: Switched to PostgreSQL to support large-scale data collection for training.
+- [ ] **Model Architecture**: Train a Graph Neural Network (GNN) or Transformer on the SMILES $\to$ $R_g$ dataset.
+- [ ] **Inference**: Provide a "Pre-screen" score that tells users if a polymer is *likely* to self-assemble before they spend resources simulating it.
 - [ ] **Goal**: Predict nanoparticle formation instantly without running full physics simulations.
 - [ ] **Data Strategy**: Use the database from Phase 1 as a "Big Data" training set (Self-Supervised Learning).
 - [ ] **Model Architecture**: Train a Graph Neural Network (GNN) or Transformer on the SMILES $\to$ $R_g$ dataset.

@@ -88,9 +88,6 @@ def render_trajectory(dump_path: Path, output_gif: Path):
             print("[*] CPU Rendering finished.")
         
         print(f"[*] Visualization saved successfully: {output_gif}")
-        print("[*] Rendering finished.")
-        
-        print(f"[*] Visualization saved successfully: {output_gif}")
         
     except Exception as e:
         print(f"Error rendering visualization: {e}")
