@@ -25,8 +25,8 @@ def main():
     # Advanced Physics Parameters
     parser.add_argument("--temp", type=float, default=300.0, help="Temperature (K)")
     parser.add_argument("--damp", type=float, default=20.0, help="Langevin damping parameter (fs). Lower = higher viscosity.")
-    parser.add_argument("--epsilon", type=float, default=0.105, help="LJ Epsilon (interaction strength)")
-    parser.add_argument("--sigma", type=float, default=2.5, help="LJ Sigma (particle size)")
+    parser.add_argument("--epsilon", type=float, default=None, help="LJ Epsilon (interaction strength). Defaults to OPLS-AA.")
+    parser.add_argument("--sigma", type=float, default=None, help="LJ Sigma (particle size). Defaults to OPLS-AA.")
     parser.add_argument("--timestep", type=float, default=1.0, help="Simulation timestep (fs)")
     parser.add_argument("--padding", type=float, default=20.0, help="Simulation box padding (Angstroms)")
 
@@ -62,7 +62,7 @@ def main():
     
     # 1. Topology
     try:
-        topology.generate_topology(args.smiles, data_file, padding=args.padding)
+        bond_params, angle_params = topology.generate_topology(args.smiles, data_file, padding=args.padding)
     except Exception as e:
         print(f"Topology Generation Failed: {e}")
         sys.exit(1)
@@ -78,7 +78,9 @@ def main():
             damp=args.damp,
             epsilon=args.epsilon,
             sigma=args.sigma,
-            timestep=args.timestep
+            timestep=args.timestep,
+            bond_params=bond_params,
+            angle_params=angle_params
         )
         simulation.run_simulation(input_file, log_file)
     except Exception as e:
