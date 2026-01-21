@@ -45,12 +45,18 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
         if bt == Chem.rdchem.BondType.TRIPLE: return 3
         return 4
 
+    # Bond and Angle definitions
+    unique_bonds = {} # (type_id) -> (k, r0)
+    bond_params_map = {} # (rounded_r0, type) -> type_id
+    
+    unique_angles = {} # (type_id) -> (k, theta0)
+    angle_params_map = {} # (rounded_theta0) -> type_id
+
     total_atoms = []
     total_bonds = []
     total_angles = []
     
     # Box Calculation
-    # Estimate box size based on number of molecules
     box_size = (len(all_mols) ** (1/3)) * 15.0 + padding
     
     atom_offset = 0
@@ -62,11 +68,15 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
         offset = (np.random.rand(3) - 0.5) * box_size * 0.8
         
         for i, atom in enumerate(mol.GetAtoms()):
+            symbol = atom.GetSymbol()
+            if symbol not in element_map:
+                raise ValueError(f"Error: Element '{symbol}' is not supported by the current force field (CHONS only).")
+            
             pos = conf.GetAtomPosition(i)
             total_atoms.append({
                 'id': atom_offset + i + 1,
                 'mol': mol_idx + 1,
-                'type': element_map.get(atom.GetSymbol(), 1),
+                'type': element_map[symbol],
                 'q': float(atom.GetProp('_GasteigerCharge')) if atom.HasProp('_GasteigerCharge') else 0.0,
                 'x': pos.x + offset[0],
                 'y': pos.y + offset[1],
@@ -74,10 +84,31 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
             })
             
         for bond in mol.GetBonds():
+            # Calculate actual length in optimized structure
+            a1_idx = bond.GetBeginAtomIdx()
+            a2_idx = bond.GetEndAtomIdx()
+            p1 = conf.GetAtomPosition(a1_idx)
+            p2 = conf.GetAtomPosition(a2_idx)
+            r0 = np.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2 + (p1.z-p2.z)**2)
+            r0_rounded = round(r0, 2)
+            
+            bt = bond.GetBondType()
+            order = 1
+            if bt == Chem.rdchem.BondType.DOUBLE: order = 2
+            elif bt == Chem.rdchem.BondType.TRIPLE: order = 3
+            
+            key = (r0_rounded, order)
+            if key not in bond_params_map:
+                type_id = len(bond_params_map) + 1
+                bond_params_map[key] = type_id
+                # Stiffness k based on order
+                k = 300.0 * order
+                unique_bonds[type_id] = (k, r0_rounded)
+            
             total_bonds.append({
-                'type': get_bond_type(bond),
-                'a1': bond.GetBeginAtomIdx() + atom_offset + 1,
-                'a2': bond.GetEndAtomIdx() + atom_offset + 1
+                'type': bond_params_map[key],
+                'a1': a1_idx + atom_offset + 1,
+                'a2': a2_idx + atom_offset + 1
             })
             
         # Detect Angles
@@ -87,8 +118,25 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
             if len(neighbors) >= 2:
                 import itertools
                 for a1, a2 in itertools.combinations(neighbors, 2):
+                    # Calculate angle
+                    p_c = conf.GetAtomPosition(idx)
+                    p1 = conf.GetAtomPosition(a1)
+                    p2 = conf.GetAtomPosition(a2)
+                    
+                    v1 = np.array([p1.x-p_c.x, p1.y-p_c.y, p1.z-p_c.z])
+                    v2 = np.array([p2.x-p_c.x, p2.y-p_c.y, p2.z-p_c.z])
+                    
+                    cos_theta = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+                    theta0 = np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))
+                    theta0_rounded = round(theta0, 1)
+                    
+                    if theta0_rounded not in angle_params_map:
+                        type_id = len(angle_params_map) + 1
+                        angle_params_map[theta0_rounded] = type_id
+                        unique_angles[type_id] = (60.0, theta0_rounded)
+                        
                     total_angles.append({
-                        'type': 1,
+                        'type': angle_params_map[theta0_rounded],
                         'a1': a1 + atom_offset + 1,
                         'a2': idx + atom_offset + 1,
                         'a3': a2 + atom_offset + 1
@@ -103,7 +151,7 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
         f.write(f"{len(total_atoms)} atoms\n")
         f.write(f"{len(total_bonds)} bonds\n")
         f.write(f"{len(total_angles)} angles\n\n")
-        f.write(f"5 atom types\n4 bond types\n1 angle types\n\n")
+        f.write(f"5 atom types\n{len(unique_bonds)} bond types\n{len(unique_angles)} angle types\n\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} xlo xhi\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} ylo yhi\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} zlo zhi\n\n")
@@ -128,15 +176,7 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
             f.write(f"{i+1} {ang['type']} {ang['a1']} {ang['a2']} {ang['a3']}\n")
             
     print(f"[*] Topology written to {output_path}")
-    return element_map, mass_map
-
-            
-    print(f"[*] Topology written to {output_path}")
-    return element_map, mass_map
-
-            
-    print(f"[*] Topology written to {output_path}")
-    return element_map, mass_map
+    return unique_bonds, unique_angles
 
 if __name__ == "__main__":
     # Test block
