@@ -123,7 +123,16 @@ def run_simulation(input_file: Path, log_file: Path):
     """
     print(f"[*] Starting LAMMPS simulation: {input_file.name}")
     
-    cmd = ["lmp", "-in", str(input_file), "-log", str(log_file)]
+    # Try to use the local GPU-enabled build if available
+    local_lmp = Path(__file__).parent.parent / "external" / "lammps" / "build" / "lmp"
+    
+    if local_lmp.exists():
+        print(f"[*] Found local GPU-enabled LAMMPS binary: {local_lmp}")
+        # Enable GPU package with 1 GPU, and use 'gpu' suffix for styles
+        cmd = [str(local_lmp), "-sf", "gpu", "-pk", "gpu", "1", "-in", str(input_file), "-log", str(log_file)]
+    else:
+        print("[!] Local GPU LAMMPS not found, falling back to system 'lmp' (CPU-only likely)")
+        cmd = ["lmp", "-in", str(input_file), "-log", str(log_file)]
     
     try:
         # Capture output to suppress huge logs but show errors
