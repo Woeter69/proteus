@@ -1,0 +1,11 @@
+{
+    "timestamp": "2026-01-27 18:06:41",
+    "config": {
+        "epochs": 200,
+        "batch_size": 64,
+        "lr": 1e-05
+    },
+    "best_metrics": {
+        "epoch": 199,
+        "loss": 5.942921876907349,
+        "mae": 
