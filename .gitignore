@@ -21,3 +21,6 @@ external/
 data/*.csv
 data/*.zip
 data/train_supplement/
+
+*.db
+*.bak
