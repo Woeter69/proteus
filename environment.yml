@@ -19,3 +19,7 @@ dependencies:
     - ovito
     - fastapi-mail
     - psycopg2-binary
+    - torch
+    - transformers
+    - pandas
+    - scikit-learn
