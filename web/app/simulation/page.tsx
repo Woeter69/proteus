@@ -194,6 +194,8 @@ export default function SimulationPage() {
   const [smiles, setSmiles] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [payload, setPayload] = useState("");
+  const [payloadCount, setPayloadCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -214,6 +216,8 @@ export default function SimulationPage() {
           smiles,
           name: name || `sim_${Date.now()}`, 
           email: email || null,
+          payload: payload || null,
+          payload_count: payload ? payloadCount : 0,
           render: true 
         }),
       });
@@ -323,6 +327,35 @@ export default function SimulationPage() {
                 className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all font-mono"
                 required
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="payload" className="block text-sm font-medium text-zinc-300">
+                  Payload SMILES (Optional)
+                </label>
+                <input
+                  id="payload"
+                  type="text"
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                  placeholder="e.g., CC(C)C1=C(C=C(C=C1)C(C)C(=O)O)C"
+                  className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="payloadCount" className="block text-sm font-medium text-zinc-300">
+                  Count
+                </label>
+                <input
+                  id="payloadCount"
+                  type="number"
+                  min="1"
+                  value={payloadCount}
+                  onChange={(e) => setPayloadCount(parseInt(e.target.value))}
+                  className="w-full bg-black/50 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all"
+                />
+              </div>
             </div>
 
             <div className="pt-4">

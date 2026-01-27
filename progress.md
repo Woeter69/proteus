@@ -44,18 +44,14 @@
 
 ### Phase 2: AI-Driven Materials Discovery - **[IN PROGRESS]**
 - [ ] **Goal**: Predict nanoparticle formation instantly without running full physics simulations.
-- [x] **Data Strategy**: Switched to PostgreSQL to support large-scale data collection for training.
-- [ ] **Model Architecture**: Train a Graph Neural Network (GNN) or Transformer on the SMILES $\to$ $R_g$ dataset.
-- [ ] **Inference**: Provide a "Pre-screen" score that tells users if a polymer is *likely* to self-assemble before they spend resources simulating it.
-- [ ] **Goal**: Predict nanoparticle formation instantly without running full physics simulations.
-- [ ] **Data Strategy**: Use the database from Phase 1 as a "Big Data" training set (Self-Supervised Learning).
-- [ ] **Model Architecture**: Train a Graph Neural Network (GNN) or Transformer on the SMILES $\to$ $R_g$ dataset.
+- [ ] **Data Strategy**: Download and clean the **NeurIPS - Open Polymer Prediction 2025** dataset (Kaggle). This provides ground-truth Molecular Dynamics data mapping SMILES $\to$ $R_g$.
+- [ ] **Model Architecture**: Train a **CamemBERT-based Transformer** model on the dataset to predict properties directly from SMILES text tokens.
 - [ ] **Inference**: Provide a "Pre-screen" score that tells users if a polymer is *likely* to self-assemble before they spend resources simulating it.
 
-### Phase 3: "The Payload" (Drug Encapsulation) - OPTIONAL
-- [ ] **Goal**: Simulate the "Trojan Horse" effect used in cancer therapy.
+### Phase 3: "The Payload" (Drug Encapsulation) - **[PARTIAL]**
+- [x] **CLI Support**: Added `--payload` and `--payload_count` flags to inject molecules.
 - [ ] **UX Philosophy**: This is a strictly **optional** module. Users must explicitly enable it; it will never be forced or run by default.
-- [ ] **Feature**: Automatically inject small "drug" molecules (e.g., rigid spheres representing Doxorubicin) into the solvent.
+- [ ] **Web Integration**: Add payload fields to the simulation submission form.
 - [ ] **Metric**: Calculate "Encapsulation Efficiency"—what % of drug molecules got trapped inside the polymer ball?
 - [ ] **Impact**: Moves the project from theoretical physics to applied pharmacology for interested users.
 
