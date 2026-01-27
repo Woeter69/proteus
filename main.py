@@ -11,10 +11,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src import topology, simulation, analysis, visualization
+from src.ml import predict
 
 def main():
     parser = argparse.ArgumentParser(description="Proteus: Polymer Nanoprecipitation Simulator")
-    parser.add_argument("--smiles", type=str, required=True, help="SMILES string of the polymer")
+    parser.add_argument("--smiles", type=str, required=False, help="SMILES string of the polymer")
+    parser.add_argument("--predict", action="store_true", help="Use AI to predict Rg instead of simulating")
+    parser.add_argument("--model", type=str, default="default", help="Name of the AI model to use (e.g. 'v3')")
     parser.add_argument("--name", type=str, default="simulation", help="Name of the simulation run")
     parser.add_argument("--steps", type=int, default=10000, help="Number of simulation steps")
     parser.add_argument("--count", type=int, default=1, help="Number of copies of the molecule to simulate")
@@ -33,6 +36,25 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s v1.0.0")
     
     args = parser.parse_args()
+
+    # 0. AI Prediction Mode
+    if args.predict:
+        if not args.smiles:
+            print("Error: --smiles is required for prediction.")
+            sys.exit(1)
+        print("=========================================")
+        print(f"Proteus AI Inference")
+        print(f"Model: {args.model}")
+        print("=========================================")
+        rg = predict.predict_rg(args.smiles, args.model)
+        if rg:
+            print(f"[*] Molecule: {args.smiles}")
+            print(f"[*] Predicted Radius of Gyration (Rg): {rg:.4f} Å")
+        sys.exit(0)
+    
+    if not args.smiles:
+        parser.print_help()
+        sys.exit(1)
     
     # Handle Molecule Count
     monomer_smiles = ".".join([args.smiles] * args.count)
