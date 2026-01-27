@@ -12,7 +12,16 @@ if [ "$#" -eq 0 ]; then
 fi
 
 # Check if first argument is a flag (Advanced Mode)
-if [[ "$1" == --* ]]; then
+if [[ "$1" == "predict" ]]; then
+    echo "Running Proteus AI Inference..."
+    shift
+    # Usage: ./run.sh predict <SMILES> [MODEL_NAME]
+    if [ -z "$2" ]; then
+         conda run --no-capture-output -n proteus_env python main.py --predict --smiles "$1"
+    else
+         conda run --no-capture-output -n proteus_env python main.py --predict --smiles "$1" --model "$2"
+    fi
+elif [[ "$1" == --* ]]; then
     echo "Running in Advanced Mode (Pass-through)..."
     conda run --no-capture-output -n proteus_env python main.py "$@"
 else
