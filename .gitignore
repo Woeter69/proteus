@@ -15,3 +15,9 @@ web/node_modules/
 web/.next/
 web/.env*.local
 external/
+
+# Models & Data
+*.pt
+data/*.csv
+data/*.zip
+data/train_supplement/
