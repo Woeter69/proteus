@@ -42,11 +42,13 @@
 - [x] **Database**: Implement a SQL database to store SMILES inputs, user details, and simulation results (Trajectory/$R_g$).
 - [x] **Notification**: Email/Dashboard alerts when the simulation finishes.
 
-### Phase 2: AI-Driven Materials Discovery - **[IN PROGRESS]**
-- [ ] **Goal**: Predict nanoparticle formation instantly without running full physics simulations.
-- [ ] **Data Strategy**: Download and clean the **NeurIPS - Open Polymer Prediction 2025** dataset (Kaggle). This provides ground-truth Molecular Dynamics data mapping SMILES $\to$ $R_g$.
-- [ ] **Model Architecture**: Train a **CamemBERT-based Transformer** model on the dataset to predict properties directly from SMILES text tokens.
-- [ ] **Inference**: Provide a "Pre-screen" score that tells users if a polymer is *likely* to self-assemble before they spend resources simulating it.
+### Phase 2: AI-Driven Materials Discovery - **[COMPLETE]**
+- [x] **Infrastructure**: Set up PyTorch + Transformers + CUDA Environment (RTX 4060).
+- [x] **Pipeline**: Implemented `src/ml/` (Dataset, Model, Train Loop).
+- [x] **Data Strategy**: Downloaded and cleaned **NeurIPS - Open Polymer Prediction 2025** dataset.
+- [x] **Model Architecture**: Trained a **ChemBERTa-based Transformer** to predict $R_g$ from SMILES.
+    - **Performance**: MAE: 1.59 Å | Accuracy: 90.0% | $R^2$: 0.75.
+- [x] **Inference**: Added `--predict` CLI flag to estimate size instantly (0.01s vs 10h simulation).
 
 ### Phase 3: "The Payload" (Drug Encapsulation) - **[PARTIAL]**
 - [x] **CLI Support**: Added `--payload` and `--payload_count` flags to inject molecules.

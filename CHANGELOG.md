@@ -2,6 +2,29 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [1.3.1] - 2026-01-27
+### Added
+- **AI Inference Engine**:
+    - Trained a high-accuracy Transformer model (`models/v3`) achieving **90.0% Accuracy** (MAE 1.59 Å) on the NeurIPS 2025 dataset.
+    - Updated `predict.py` and `main.py` to support loading custom model versions via `--model`.
+    - Enhanced `run.sh` to support `predict <smiles> <model_name>` syntax.
+    - Added `train.sh` helper script for parameterized training runs.
+- **Training Infrastructure**:
+    - Implemented metadata saving (JSON) for training runs to track hyperparameters and metrics.
+    - Fixed JSON serialization bug for NumPy types in training logs.
+
+## [1.3.0] - 2026-01-27
+### Added
+- **Machine Learning Module (Phase 2)**:
+    - Implemented `src/ml/` for AI-driven property prediction.
+    - **Architecture**: `ChemBERTa` (Transformer) model adapted for regression ($R_g$ prediction).
+    - **Infrastructure**: Set up PyTorch with CUDA 12.1 support for RTX 40-series GPUs.
+    - **Training Pipeline**: Created `dataset.py`, `model.py`, and `train.py` with SafeTensors support.
+    - **Synthetic Data**: Added `synthetic_data.py` to generate dummy polymer datasets for immediate pipeline verification.
+- **Environment**: 
+    - Resolved dependency conflicts between `lammps` and `pytorch` by implementing a hybrid Conda/Pip installation strategy in `environment.yml`.
+    - Added `transformers`, `pandas`, `scikit-learn` to the environment.
+
 ## [1.2.1] - 2026-01-27
 ### Added
 - **Web Payload Support**: Integrated the "Payload" (Drug Encapsulation) feature into the Web Interface.
