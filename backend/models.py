@@ -15,6 +15,8 @@ class Simulation(Base):
     # Configuration
     steps = Column(Integer, default=10000)
     count = Column(Integer, default=1)
+    payload = Column(String, nullable=True)
+    payload_count = Column(Integer, default=0)
     
     # Results (Paths to files)
     log_path = Column(String, nullable=True)

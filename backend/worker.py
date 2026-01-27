@@ -12,7 +12,8 @@ from backend.models import Simulation
 from backend.email_service import send_simulation_complete_email
 
 @celery_app.task(bind=True)
-def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count: int = 1, render: bool = False):
+def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count: int = 1, 
+                        payload: str = None, payload_count: int = 0, render: bool = False):
     """
     Celery task to run the full Proteus pipeline.
     """
@@ -26,9 +27,12 @@ def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count:
         db.commit()
     
     # Handle Molecule Count
-    if count > 1:
-        # "CCO" * 3 -> "CCO.CCO.CCO"
-        smiles = ".".join([smiles] * count)
+    full_smiles = ".".join([smiles] * count)
+    
+    # Handle Payload
+    if payload:
+        payload_full = ".".join([payload] * payload_count)
+        full_smiles = f"{full_smiles}.{payload_full}"
     
     # Setup Paths
     # We use the 'output' directory in the project root
@@ -46,7 +50,7 @@ def run_simulation_task(self, smiles: str, name: str, steps: int = 10000, count:
     
     # 1. Topology
     try:
-        bond_params, angle_params = topology.generate_topology(smiles, data_file)
+        bond_params, angle_params = topology.generate_topology(full_smiles, data_file)
     except Exception as e:
         if db_sim:
             db_sim.status = "FAILED"

@@ -42,6 +42,8 @@ class SimulationRequest(BaseModel):
     email: Optional[str] = None
     steps: int = 10000
     count: int = 1
+    payload: Optional[str] = None
+    payload_count: int = 0
     render: bool = False
 
 @app.get("/")
@@ -63,6 +65,8 @@ def trigger_simulation(request: SimulationRequest, db: Session = Depends(get_db)
         name=request.name,
         steps=request.steps,
         count=request.count,
+        payload=request.payload,
+        payload_count=request.payload_count,
         render=request.render
     )
     
@@ -74,6 +78,8 @@ def trigger_simulation(request: SimulationRequest, db: Session = Depends(get_db)
         smiles=request.smiles,
         steps=request.steps,
         count=request.count,
+        payload=request.payload,
+        payload_count=request.payload_count,
         status="PENDING"
     )
     db.add(db_sim)
