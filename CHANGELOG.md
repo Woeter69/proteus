@@ -2,6 +2,14 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [1.2.1] - 2026-01-27
+### Added
+- **Web Payload Support**: Integrated the "Payload" (Drug Encapsulation) feature into the Web Interface.
+    - Updated `SimulationRequest` API to accept `payload` and `payload_count`.
+    - Added optional payload fields to the simulation submission form.
+    - Database schema migrated to store payload configuration.
+    - Celery worker updated to handle multi-molecule payload injections.
+
 ## [1.2.0] - 2026-01-21
 ### Added
 - **Email Notifications**: Implemented automated HTML email alerts for completed or failed simulations using `smtplib` (Backend) and a new user input field (Frontend).
