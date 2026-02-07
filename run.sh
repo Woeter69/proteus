@@ -8,6 +8,7 @@ if [ "$#" -eq 0 ]; then
     echo "Usage Advanced: $0 --smiles <SMILES> ... (Pass any main.py flags)"
     echo "New Variables available: --temp, --damp, --epsilon, --sigma, --timestep, --padding"
     echo "Payload Variables: --payload <SMILES>, --payload_count <N>"
+    echo "Outputs: polymer.data, simulation.log, stability.png, (animation.gif if --render used)"
     exit 1
 fi
 
@@ -59,6 +60,5 @@ else
         --name "$NAME" \
         --steps "$STEPS" \
         --count "$COUNT" \
-        --render \
         "$@"
 fi

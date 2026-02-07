@@ -7,7 +7,7 @@
 *   **Text-to-Structure**: Instantly converts SMILES strings into 3D molecular geometries with explicit hydrogens.
 *   **Automated Topology**: Generates LAMMPS-compliant data files with generic force field parameters (Lennard-Jones).
 *   **Physics Engine**: Runs implicit solvent simulations using Langevin dynamics with optimized viscosity for realistic molecular drifting.
-*   **Built-in Analytics**: Automatically parses simulation logs to calculate the final Radius of Gyration ($R_g$).
+*   **Built-in Analytics**: Automatically parses simulation logs to calculate the final Radius of Gyration ($R_g$) and generates stability plots.
 *   **Automated Visualization**: Uses **Ovito** to render high-quality, color-coded GIF animations of the simulation.
 
 ## Installation
@@ -77,6 +77,7 @@ Results are saved in `output/<NAME>/`:
 *   `polymer.data`: LAMMPS topology file (3D structure).
 *   `simulation.in`: The generated LAMMPS input script.
 *   `simulation.log`: Raw simulation data (energies, temperatures).
+*   `stability.png`: **Equilibrium graph** showing Temperature and Potential Energy over time.
 *   `trajectory.dump`: Raw atom positions (viewable in external tools like VMD/Ovito).
 
 ## Architecture

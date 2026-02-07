@@ -78,7 +78,25 @@ All notable changes to the Proteus project will be documented in this file.
 - **Visuals**: Removed refraction (opaque black base) for ultra-sharp star reflections.
 - **Visuals**: Added glowy white `<Edges />` to the Hero Cube to enhance visibility and aesthetics.
 
-## [Unreleased] - 2026-01-19
+## [Unreleased]
+
+
+
+### Added
+
+- Automated stability graph generation (`stability.png`) after simulations to visualize Temperature and Potential Energy equilibrium.
+
+- Matplotlib dependency for scientific plotting.
+
+
+
+### Changed
+
+- Recreated `proteus_env` with updated dependencies.
+
+- Enhanced `src/analysis.py` to parse thermodynamic data for stability reporting.
+
+ - 2026-01-19
 
 ### Added
 - **Visual Overhaul**: Implemented a "Triple-Nested Tesseract" hero component with:

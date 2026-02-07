@@ -19,7 +19,9 @@ This document serves as the single source of truth for all configurable variable
 | `--damp` | `damp` | `20.0` | **Damping (fs)**. Inverse of viscosity. Lower value = Higher Friction (Thicker Solvent). |
 | `--timestep` | `timestep` | `1.0` | **Time Step (fs)**. Resolution of the simulation integration. |
 | `--padding` | `padding` | `20.0` | **Padding (Å)**. Extra space around molecules to determine Simulation Box size. |
-| `--steps` | `steps` | `10000` | **Duration**. Total number of simulation steps to run. |
+| `--steps` | `steps` | `10000` | **Total Simulation Time**. Total number of integration steps to run. |
+
+> **Note on Duration:** The total physical time simulated is `steps * timestep`. For example, 10,000 steps at 1.0 fs = 10 picoseconds (ps).
 
 ## Force Field (Lennard-Jones)
 *Note: CHONS atoms (C, H, O, N, S) use specific OPLS-AA parameters by default. These flags act as global overrides or defaults for unknown types.*
@@ -33,3 +35,14 @@ This document serves as the single source of truth for all configurable variable
 | Flag | Variable | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `--render` | `render` | `False` | If set, generates an animated GIF of the trajectory using Ovito. |
+| `--plot` | `plot` | `True` | Generates a stability plot (`stability.png`). Use `--no-plot` to disable. |
+
+## Standard Outputs
+| File | Description |
+| :--- | :--- |
+| `polymer.data` | LAMMPS topology file. |
+| `simulation.in` | LAMMPS input script. |
+| `simulation.log` | Raw thermodynamic data log. |
+| `trajectory.dump` | Atom positions over time. |
+| `animation.gif` | Trajectory animation (if `--render` is used). |
+| `stability.png` | Graph showing Temperature and Potential Energy equilibrium. |

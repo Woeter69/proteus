@@ -24,6 +24,8 @@ def main():
     parser.add_argument("--payload", type=str, default=None, help="SMILES of the drug/payload molecule (Optional)")
     parser.add_argument("--payload_count", type=int, default=1, help="Number of payload molecules")
     parser.add_argument("--render", action="store_true", help="Render a GIF of the simulation (requires Ovito)")
+    parser.add_argument("--plot", action="store_true", default=True, help="Generate a stability plot (default: True)")
+    parser.add_argument("--no-plot", action="store_false", dest="plot", help="Disable stability plot generation")
     
     # Advanced Physics Parameters
     parser.add_argument("--temp", type=float, default=300.0, help="Temperature (K)")
@@ -77,6 +79,7 @@ def main():
     log_file = output_dir / "simulation.log"
     dump_file = output_dir / "trajectory.dump"
     gif_file = output_dir / "animation.gif"
+    plot_file = output_dir / "stability.png"
     
     print("=========================================")
     print(f"Proteus Pipeline: {args.name}")
@@ -111,7 +114,8 @@ def main():
         
     # 3. Analysis
     try:
-        analysis.analyze_results(log_file)
+        plot_path = plot_file if args.plot else None
+        analysis.analyze_results(log_file, output_plot=plot_path)
     except Exception as e:
         print(f"Analysis Failed: {e}")
         sys.exit(1)
