@@ -18,10 +18,11 @@ def generate_input_file(
     sigma: float = None,   # None means use CHONS defaults
     timestep: float = 1.0,
     bond_params: dict = None,
-    angle_params: dict = None
+    angle_params: dict = None,
+    dihedral_params: dict = None
 ):
     """
-    Writes the simulation.in file for LAMMPS with CHONS support and dynamic bonds/angles.
+    Writes the simulation.in file for LAMMPS with CHONS support and dynamic bonds/angles/dihedrals.
     """
     
     # Standard OPLS-AA Non-bonded parameters (kcal/mol, Angstroms)
@@ -82,6 +83,12 @@ pair_modify mix arithmetic
         # Fallback
         content += "angle_coeff 1 60.0 109.5\n"
 
+    # Dynamic Dihedrals
+    if dihedral_params:
+        content += "\ndihedral_style harmonic\n"
+        for d_type, (k, d, n) in dihedral_params.items():
+            content += f"dihedral_coeff {d_type} {k} {d} {n}\n"
+
     content += f"""
 neighbor 2.0 bin
 neigh_modify delay 0 every 1 check yes
@@ -111,10 +118,6 @@ thermo {out_freq}
 # Run
 run {steps}
 """
-    with open(input_file, 'w') as f:
-        f.write(content)
-    
-    print(f"[*] Input file written to {input_file}")
     with open(input_file, 'w') as f:
         f.write(content)
     
