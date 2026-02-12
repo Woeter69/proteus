@@ -52,9 +52,13 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
     unique_angles = {} # (type_id) -> (k, theta0)
     angle_params_map = {} # (rounded_theta0) -> type_id
 
+    unique_dihedrals = {} # (type_id) -> (k, d, n)
+    dihedral_params_map = {} # (k, d, n) -> type_id
+
     total_atoms = []
     total_bonds = []
     total_angles = []
+    total_dihedrals = []
     
     # Box Calculation
     box_size = (len(all_mols) ** (1/3)) * 15.0 + padding
@@ -110,6 +114,39 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
                 'a1': a1_idx + atom_offset + 1,
                 'a2': a2_idx + atom_offset + 1
             })
+
+            # Detect Dihedrals around this bond
+            neigh1 = [n.GetIdx() for n in mol.GetAtomWithIdx(a1_idx).GetNeighbors() if n.GetIdx() != a2_idx]
+            neigh2 = [n.GetIdx() for n in mol.GetAtomWithIdx(a2_idx).GetNeighbors() if n.GetIdx() != a1_idx]
+            
+            for n1 in neigh1:
+                for n2 in neigh2:
+                    if n1 == n2: continue
+                    
+                    # Heuristic parameters for CHONS
+                    # Double bond -> planar (n=2, d=-1), Single bond -> staggered (n=3, d=1)
+                    if bt == Chem.rdchem.BondType.DOUBLE:
+                        k_di = 10.0
+                        d_di = -1
+                        n_di = 2
+                    else:
+                        k_di = 1.0
+                        d_di = 1
+                        n_di = 3
+                    
+                    di_key = (k_di, d_di, n_di)
+                    if di_key not in dihedral_params_map:
+                        type_id = len(dihedral_params_map) + 1
+                        dihedral_params_map[di_key] = type_id
+                        unique_dihedrals[type_id] = di_key
+                    
+                    total_dihedrals.append({
+                        'type': dihedral_params_map[di_key],
+                        'a1': n1 + atom_offset + 1,
+                        'a2': a1_idx + atom_offset + 1,
+                        'a3': a2_idx + atom_offset + 1,
+                        'a4': n2 + atom_offset + 1
+                    })
             
         # Detect Angles
         for atom in mol.GetAtoms():
@@ -150,8 +187,9 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
         f.write(f"LAMMPS data file: {smiles}\n\n")
         f.write(f"{len(total_atoms)} atoms\n")
         f.write(f"{len(total_bonds)} bonds\n")
-        f.write(f"{len(total_angles)} angles\n\n")
-        f.write(f"5 atom types\n{len(unique_bonds)} bond types\n{len(unique_angles)} angle types\n\n")
+        f.write(f"{len(total_angles)} angles\n")
+        f.write(f"{len(total_dihedrals)} dihedrals\n\n")
+        f.write(f"5 atom types\n{len(unique_bonds)} bond types\n{len(unique_angles)} angle types\n{len(unique_dihedrals)} dihedral types\n\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} xlo xhi\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} ylo yhi\n")
         f.write(f"{-half_box:.4f} {half_box:.4f} zlo zhi\n\n")
@@ -174,9 +212,15 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
         f.write("Angles\n\n")
         for i, ang in enumerate(total_angles):
             f.write(f"{i+1} {ang['type']} {ang['a1']} {ang['a2']} {ang['a3']}\n")
+        f.write("\n")
+
+        if total_dihedrals:
+            f.write("Dihedrals\n\n")
+            for i, di in enumerate(total_dihedrals):
+                f.write(f"{i+1} {di['type']} {di['a1']} {di['a2']} {di['a3']} {di['a4']}\n")
             
     print(f"[*] Topology written to {output_path}")
-    return unique_bonds, unique_angles
+    return unique_bonds, unique_angles, unique_dihedrals
 
 if __name__ == "__main__":
     # Test block
