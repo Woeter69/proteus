@@ -87,7 +87,7 @@ def main():
     
     # 1. Topology
     try:
-        bond_params, angle_params = topology.generate_topology(args.smiles, data_file, padding=args.padding)
+        bond_params, angle_params, dihedral_params = topology.generate_topology(args.smiles, data_file, padding=args.padding)
     except Exception as e:
         print(f"Topology Generation Failed: {e}")
         sys.exit(1)
@@ -105,7 +105,8 @@ def main():
             sigma=args.sigma,
             timestep=args.timestep,
             bond_params=bond_params,
-            angle_params=angle_params
+            angle_params=angle_params,
+            dihedral_params=dihedral_params
         )
         simulation.run_simulation(input_file, log_file)
     except Exception as e:

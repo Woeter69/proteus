@@ -6,9 +6,11 @@
 - [x] **Module I: Topology Architect**:
     - [x] Implemented `src/topology.py` for SMILES to LAMMPS conversion.
     - [x] Upgraded to robust 3D embedding (5000 attempts) for long polymer chains.
+    - [x] **Added Dihedral Detection**: Automatic detection of proper dihedrals for structural stability.
 - [x] **Module II & III: Simulation Engine**:
     - [x] Implemented `src/simulation.py` for `simulation.in` generation and execution.
     - [x] Refined physics with optimized Langevin damping (viscosity) for smoother motion.
+    - [x] **Dihedral Integration**: Added `dihedral_style harmonic` and dynamic coefficient mapping to prevent excessive gyration.
 - [x] **Module IV: Analytics**:
     - [x] Implemented `src/analysis.py` for log parsing and $R_g$ calculation.
     - [x] Fixed character encoding issues in log parsing.
