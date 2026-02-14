@@ -2,6 +2,16 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [1.3.2] - 2026-02-09
+### Added
+- **Dihedral Support**:
+    - Implemented automatic dihedral detection in `src/topology.py` using RDKit neighbor analysis.
+    - Added `dihedral_style harmonic` to LAMMPS input generation in `src/simulation.py`.
+    - Differentiates between Single (n=3) and Double (n=2, planar) bonds for improved structural stability.
+    - Updated `main.py` to pass dihedral parameters through the pipeline.
+### Fixed
+- **System Stability**: Resolved excessive gyration and temperature fluctuations in small simulation boxes by constraining bond rotations with proper dihedrals.
+
 ## [1.3.1] - 2026-01-27
 ### Added
 - **AI Inference Engine**:
