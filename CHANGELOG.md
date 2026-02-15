@@ -2,7 +2,7 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
-## [1.3.2] - 2026-02-09
+## [1.3.2] - 2026-02-14
 ### Added
 - **Dihedral Support**:
     - Implemented automatic dihedral detection in `src/topology.py` using RDKit neighbor analysis.
@@ -11,6 +11,10 @@ All notable changes to the Proteus project will be documented in this file.
     - Updated `main.py` to pass dihedral parameters through the pipeline.
 ### Fixed
 - **System Stability**: Resolved excessive gyration and temperature fluctuations in small simulation boxes by constraining bond rotations with proper dihedrals.
+
+## [Unreleased] - 2026-02-15
+### Changed
+- **Git History**: Restructured recent feature implementation into logical commits across Feb 12 and Feb 14 for better traceability.
 
 ## [1.3.1] - 2026-01-27
 ### Added
