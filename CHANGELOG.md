@@ -2,6 +2,19 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [1.4.0] - 2026-02-17
+### Changed
+- **Project Restructuring**: 
+    - Moved all web-related components (Frontend, Backend, Docker, Nginx) into a dedicated `platform/` directory for better separation of concerns between the CLI core and the Web UI.
+    - Renamed `web/` to `platform/frontend/` and `backend/` to `platform/backend/`.
+    - Consolidated deployment configurations into `platform/` (Dockerfile, docker-compose.yml, nginx.conf).
+- **Backend Refactoring**:
+    - Updated `sys.path` and base directory calculations in FastAPI and Celery worker to support the new directory depth.
+    - Implemented robust root directory detection in `platform/backend/main.py`, `worker.py`, and `database.py`.
+- **Deployment**:
+    - Updated `Dockerfile` and `vercel.json` to reflect new paths.
+    - Updated root `Makefile` and root `.gitignore`.
+
 ## [1.3.2] - 2026-02-14
 ### Added
 - **Dihedral Support**:

@@ -80,12 +80,34 @@ Results are saved in `output/<NAME>/`:
 *   `stability.png`: **Equilibrium graph** showing Temperature and Potential Energy over time.
 *   `trajectory.dump`: Raw atom positions (viewable in external tools like VMD/Ovito).
 
+## Web Platform
+
+Proteus includes a modern web interface for managing simulations, viewing results, and monitoring job queues.
+
+### Local Development
+```bash
+make up
+```
+This starts the **Next.js** frontend (port 3000), **FastAPI** backend (port 8000), and **Celery** worker.
+
+### Production (Docker)
+```bash
+docker compose -f platform/docker-compose.yml up -d
+docker build -f platform/Dockerfile -t proteus .
+docker run -p 8080:8080 proteus
+```
+
 ## Architecture
 
-1.  **Topology Architect (`topology.py`)**: SMILES $\to$ 3D Topology via RDKit & UFF.
-2.  **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity for smooth motion.
-3.  **Analytics (`analysis.py`)**: Log parsing and $R_g$ calculation.
-4.  **Visualization (`visualization.py`)**: Headless rendering of trajectories via Ovito.
+1.  **Simulation Core (`src/`)**: 
+    - **Topology Architect (`topology.py`)**: SMILES $\to$ 3D Topology via RDKit & UFF.
+    - **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity for smooth motion.
+    - **Analytics (`analysis.py`)**: Log parsing and $R_g$ calculation.
+    - **Visualization (`visualization.py`)**: Headless rendering of trajectories via Ovito.
+2.  **Web Platform (`platform/`)**:
+    - **Frontend**: Next.js 14+ application with 3D visualization.
+    - **Backend**: FastAPI with PostgreSQL and Redis.
+    - **Worker**: Celery task runner for simulation jobs.
 
 ## Simulation Physics
 

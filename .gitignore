@@ -5,15 +5,13 @@ output/
 .ipynb_checkpoints/
 *.log
 
-# Backend
-backend/__pycache__/
-backend/venv/
-backend/.env
-
-# Frontend
-web/node_modules/
-web/.next/
-web/.env*.local
+# Platform (Web)
+platform/backend/__pycache__/
+platform/backend/venv/
+platform/backend/.env
+platform/frontend/node_modules/
+platform/frontend/.next/
+platform/frontend/.env*.local
 external/
 
 # Models & Data
