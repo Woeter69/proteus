@@ -8,7 +8,7 @@
 ## Project Evolution
 - Initial implementation focused on automated SMILES-to-MD pipeline.
 - Added Ovito integration for high-quality, color-coded GIF visualization.
-- Roadmap includes Web Interface, AI Prediction, and Optional Payload simulation.
+- Roadmap includes AI Prediction and Optional Payload simulation.
 - **AI Strategy**: Using Kaggle's "NeurIPS - Open Polymer Prediction 2025" dataset to train a **CamemBERT** Transformer model, rather than self-supervised learning.
 
 ## Documentation Rules
