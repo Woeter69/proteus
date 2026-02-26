@@ -11,13 +11,10 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src import topology, simulation, analysis, visualization
-from src.ml import predict
 
 def main():
     parser = argparse.ArgumentParser(description="Proteus: Polymer Nanoprecipitation Simulator")
     parser.add_argument("--smiles", type=str, required=False, help="SMILES string of the polymer")
-    parser.add_argument("--predict", action="store_true", help="Use AI to predict Rg instead of simulating")
-    parser.add_argument("--model", type=str, default="default", help="Name of the AI model to use (e.g. 'v3')")
     parser.add_argument("--name", type=str, default="simulation", help="Name of the simulation run")
     parser.add_argument("--steps", type=int, default=10000, help="Number of simulation steps")
     parser.add_argument("--count", type=int, default=1, help="Number of copies of the molecule to simulate")
@@ -39,21 +36,6 @@ def main():
     
     args = parser.parse_args()
 
-    # 0. AI Prediction Mode
-    if args.predict:
-        if not args.smiles:
-            print("Error: --smiles is required for prediction.")
-            sys.exit(1)
-        print("=========================================")
-        print(f"Proteus AI Inference")
-        print(f"Model: {args.model}")
-        print("=========================================")
-        rg = predict.predict_rg(args.smiles, args.model)
-        if rg:
-            print(f"[*] Molecule: {args.smiles}")
-            print(f"[*] Predicted Radius of Gyration (Rg): {rg:.4f} Å")
-        sys.exit(0)
-    
     if not args.smiles:
         parser.print_help()
         sys.exit(1)
@@ -116,7 +98,13 @@ def main():
     # 3. Analysis
     try:
         plot_path = plot_file if args.plot else None
-        analysis.analyze_results(log_file, output_plot=plot_path)
+        analysis.analyze_results(
+            log_file, 
+            output_plot=plot_path,
+            polymer_count=args.count,
+            payload_count=args.payload_count if args.payload else 0,
+            dump_path=dump_file
+        )
     except Exception as e:
         print(f"Analysis Failed: {e}")
         sys.exit(1)
