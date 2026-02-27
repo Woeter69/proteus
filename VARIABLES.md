@@ -21,6 +21,10 @@ This document serves as the single source of truth for all configurable variable
 | `--padding` | `padding` | `20.0` | **Padding (Å)**. Extra space around molecules to determine Simulation Box size. |
 | `--steps` | `steps` | `10000` | **Total Simulation Time**. Total number of integration steps to run. |
 
+### Internal Optimizations (Hardcoded)
+- **Neighbor Frequency**: `every 10`. Optimized for performance on GPU builds.
+- **Minimization**: `1000` iterations. Improved structural stability before dynamics.
+
 > **Note on Duration:** The total physical time simulated is `steps * timestep`. For example, 10,000 steps at 1.0 fs = 10 picoseconds (ps).
 
 ## Force Field (Lennard-Jones)

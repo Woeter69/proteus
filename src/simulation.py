@@ -91,7 +91,7 @@ pair_modify mix arithmetic
 
     content += f"""
 neighbor 2.0 bin
-neigh_modify delay 0 every 1 check yes
+neigh_modify delay 0 every 10 check yes
 
 # 1-4 interactions are typically scaled in molecular force fields
 special_bonds lj 0.0 0.0 0.5 
@@ -100,7 +100,7 @@ special_bonds lj 0.0 0.0 0.5
 group all_atoms type 1 2 3 4 5
 
 # Simulation Protocol
-minimize 1.0e-4 1.0e-6 100 1000
+minimize 1.0e-4 1.0e-6 1000 10000
 reset_timestep 0
 
 timestep {timestep}

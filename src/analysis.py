@@ -20,22 +20,28 @@ def moving_average(data, window_size):
         return data
     return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
 
-def analyze_results(log_path: Path, output_plot: Path = None):
+def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int = 1, payload_count: int = 0, dump_path: Path = None):
     """
     Parses the LAMMPS log file to find physical metrics and optionally generates a stability plot.
+    If payload/dump info is provided, calculates encapsulation efficiency.
 
     Args:
         log_path (Path): Path to the LAMMPS log file.
         output_plot (Path, optional): Path to save the stability plot.
+        polymer_count (int): Number of polymer molecules.
+        payload_count (int): Number of payload molecules.
+        dump_path (Path): Path to the trajectory dump file.
     
     Returns:
-        float: The final Rg value.
+        dict: Analysis results containing Rg and Efficiency.
     """
     print(f"[*] Analyzing results from {log_path}")
     
+    results = {"rg": 0.0, "efficiency": None}
+
     if not log_path.exists():
         print(f"Error: Log file {log_path} not found.")
-        return None
+        return results
         
     print(f"[*] Parsing log file: {log_path.name}")
 
@@ -60,7 +66,7 @@ def analyze_results(log_path: Path, output_plot: Path = None):
         
         if last_step_idx == -1:
              print("Error: Could not find thermo output with c_rg in log.")
-             return None
+             return results
 
         rg_col = col_map.get("c_rg")
         temp_col = col_map.get("Temp")
@@ -88,10 +94,9 @@ def analyze_results(log_path: Path, output_plot: Path = None):
                 
         if not rg_values:
             print("Warning: No data extraction.")
-            return 0.0
-            
-        final_rg = rg_values[-1]
-        print(f"[*] Final Radius of Gyration (Rg): {final_rg:.4f} Angstroms")
+        else:
+            results["rg"] = rg_values[-1]
+            print(f"[*] Final Radius of Gyration (Rg): {results['rg']:.4f} Angstroms")
 
         # Generate stability plot if requested and possible
         if output_plot and steps:
@@ -127,11 +132,85 @@ def analyze_results(log_path: Path, output_plot: Path = None):
                 plt.savefig(output_plot)
                 plt.close()
 
-        return final_rg
+        # Phase 3: Encapsulation Efficiency
+        if payload_count > 0 and dump_path and dump_path.exists():
+            print(f"[*] Calculating Encapsulation Efficiency...")
+            eff = calculate_encapsulation_efficiency(dump_path, polymer_count, payload_count, results["rg"])
+            results["efficiency"] = eff
+            print(f"[*] Encapsulation Efficiency: {eff:.2f}%")
+
+        return results
 
     except Exception as e:
         print(f"Error analyzing log file: {e}")
-        return None
+        return results
+
+def calculate_encapsulation_efficiency(dump_path: Path, polymer_count: int, payload_count: int, rg: float):
+    """
+    Parses the LAST frame of the trajectory dump to see if payload molecules are within the polymer cluster.
+    """
+    try:
+        with open(dump_path, 'r') as f:
+            lines = f.readlines()
+            
+        # Find start of the last frame
+        last_frame_start = -1
+        for i in range(len(lines)-1, -1, -1):
+            if "ITEM: ATOMS" in lines[i]:
+                last_frame_start = i
+                break
+        
+        if last_frame_start == -1:
+            return 0.0
+            
+        header = lines[last_frame_start].strip().split()
+        col_map = {h: idx-2 for idx, h in enumerate(header)} # -2 because "ITEM:" and "ATOMS" are prefix
+        
+        mol_col = col_map.get("mol")
+        x_col = col_map.get("x")
+        y_col = col_map.get("y")
+        z_col = col_map.get("z")
+        
+        polymer_atoms = []
+        payload_mols = {m: [] for m in range(polymer_count + 1, polymer_count + payload_count + 1)}
+        
+        for line in lines[last_frame_start+1:]:
+            tokens = line.strip().split()
+            if not tokens: continue
+            
+            mol_id = int(tokens[mol_col])
+            pos = np.array([float(tokens[x_col]), float(tokens[y_col]), float(tokens[z_col])])
+            
+            if mol_id <= polymer_count:
+                polymer_atoms.append(pos)
+            elif mol_id in payload_mols:
+                payload_mols[mol_id].append(pos)
+                
+        if not polymer_atoms:
+            return 0.0
+            
+        polymer_atoms = np.array(polymer_atoms)
+        polymer_com = np.mean(polymer_atoms, axis=0)
+        
+        # Heuristic: Encapsulated if payload COM is within 1.5 * Rg of polymer COM
+        # We use 1.5 because Rg is the root-mean-square distance, the actual volume is larger.
+        encapsulated_count = 0
+        threshold = 1.5 * rg
+        
+        for mol_id, atoms in payload_mols.items():
+            if not atoms: continue
+            payload_com = np.mean(np.array(atoms), axis=0)
+            dist = np.linalg.norm(payload_com - polymer_com)
+            
+            if dist <= threshold:
+                encapsulated_count += 1
+                
+        return (encapsulated_count / payload_count) * 100.0
+        
+    except Exception as e:
+        print(f"Error calculating efficiency: {e}")
+        return 0.0
+
 
 if __name__ == "__main__":
     pass
