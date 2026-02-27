@@ -2,6 +2,23 @@
 
 All notable changes to the Proteus project will be documented in this file.
 
+## [Unreleased]
+### Changed
+- **Archived AI Module**: The entire machine learning and AI property prediction suite has been moved to `archive/ai/`.
+    - Removed `src/ml/` (Dataset, Model, Training, Prediction logic).
+    - Removed `models/` (Pre-trained ChemBERTa model weights).
+    - Removed `data/train_supplement/` (Training datasets).
+    - Removed `train.sh` helper script.
+- **CLI Clean-up**: 
+    - Removed `--predict` and `--model` flags from `main.py`.
+    - Removed `predict` command from `run.sh`.
+- **Dependency Optimization**: 
+    - Removed `transformers`, `torch`, `pandas`, and `scikit-learn` from `requirements.txt` and `environment.yml` to reduce environment footprint and resolve potential conflicts.
+- **Roadmap Update**: Shifted focus back to physical Molecular Dynamics simulations and "The Payload" (Drug Encapsulation) features.
+- **Micro-optimization**: 
+    - Tuned neighbor list update frequency (`every 10`) achieving a **30% performance speedup** in simulation loop times.
+    - Increased minimization iterations to `1000` to ensure better structural stability for complex chains before dynamics.
+
 ## [1.4.0] - 2026-02-17
 ### Changed
 - **Project Restructuring**: 

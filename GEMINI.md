@@ -8,8 +8,7 @@
 ## Project Evolution
 - Initial implementation focused on automated SMILES-to-MD pipeline.
 - Added Ovito integration for high-quality, color-coded GIF visualization.
-- Roadmap includes AI Prediction and Optional Payload simulation.
-- **AI Strategy**: Using Kaggle's "NeurIPS - Open Polymer Prediction 2025" dataset to train a **CamemBERT** Transformer model, rather than self-supervised learning.
+- **Archived AI**: The ML-based property prediction (CamemBERT/ChemBERTa) has been moved to `archive/ai/`. The project now focuses on simulation accuracy and optional "Payload" features.
 
 ## Documentation Rules
 - **Variables**: `VARIABLES.md` is the Single Source of Truth for simulation parameters. If a new CLI argument or physics variable is added, it **MUST** be added to `VARIABLES.md` in the same turn.

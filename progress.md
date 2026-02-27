@@ -1,5 +1,8 @@
 # Proteus Project Progress
 
+## Current Focus
+- [x] **Micro-optimization**: Refining `src/simulation.py` and LAMMPS `.in` file generation for performance and stability. (Achieved 30% speedup via neighbor list tuning).
+
 ## Completed Tasks
 - [x] **Project Scaffolding**: Created directory structure (`src/`, `output/`, `templates/`).
 - [x] **Environment Configuration**: Created `environment.yml` with Python 3.9, RDKit, NumPy, and LAMMPS. Added `ovito` for visualization.
@@ -44,31 +47,38 @@
 - [x] **Database**: Implement a SQL database to store SMILES inputs, user details, and simulation results (Trajectory/$R_g$).
 - [x] **Notification**: Email/Dashboard alerts when the simulation finishes.
 
-### Phase 2: AI-Driven Materials Discovery - **[COMPLETE]**
-- [x] **Infrastructure**: Set up PyTorch + Transformers + CUDA Environment (RTX 4060).
-- [x] **Pipeline**: Implemented `src/ml/` (Dataset, Model, Train Loop).
-- [x] **Data Strategy**: Downloaded and cleaned **NeurIPS - Open Polymer Prediction 2025** dataset.
-- [x] **Model Architecture**: Trained a **ChemBERTa-based Transformer** to predict $R_g$ from SMILES.
-    - **Performance**: MAE: 1.59 Å | Accuracy: 90.0% | $R^2$: 0.75.
-- [x] **Inference**: Added `--predict` CLI flag to estimate size instantly (0.01s vs 10h simulation).
-
 ### Phase 3: "The Payload" (Drug Encapsulation) - **[PARTIAL]**
+
 - [x] **CLI Support**: Added `--payload` and `--payload_count` flags to inject molecules.
+
 - [ ] **UX Philosophy**: This is a strictly **optional** module. Users must explicitly enable it; it will never be forced or run by default.
+
 - [ ] **Web Integration**: Add payload fields to the simulation submission form.
+
 - [ ] **Metric**: Calculate "Encapsulation Efficiency"—what % of drug molecules got trapped inside the polymer ball?
+
 - [ ] **Impact**: Moves the project from theoretical physics to applied pharmacology for interested users.
 
-### Phase 4: Inverse Design (Evolutionary Algorithms)
-- [ ] **Goal**: The user inputs a *Target Property* (e.g., "I need a sphere size of 12nm"), and the system *invents* the chemistry.
-- [ ] **Method**: Use a Genetic Algorithm to mutate the SMILES string, run a quick simulation, score it, and evolve the molecule over generations.
-- [ ] **Impact**: True automated discovery of new materials.
 
-### Phase 5: Immersive Analytics (Interactive WebGL)
+
+### Phase 4: Immersive Analytics (Interactive WebGL)
+
 - [ ] **Goal**: Move beyond static GIFs.
+
 - [ ] **Tech**: Export trajectories to NGLView or Three.js.
+
 - [ ] **Feature**: Users can rotate, zoom, and click on specific atoms in their browser to see bond angles and distances in real-time.
 
-### Phase 6: Automated "Lab Notebook"
+
+
+### Phase 5: Automated "Lab Notebook"
+
 - [ ] **Goal**: Instant publication-ready reports.
+
 - [ ] **Output**: Generate a PDF containing the chemical structure (2D), the Simulation Video, Energy Plots, and the $R_g$ Analysis.
+
+
+
+## Scrapped / Archived
+
+- **AI-Driven Materials Discovery**: The ChemBERTa-based prediction engine and all associated training pipelines (`src/ml/`) have been archived. The project will focus exclusively on high-fidelity Molecular Dynamics simulation and physical analysis.
