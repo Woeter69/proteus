@@ -4,6 +4,10 @@ All notable changes to the Proteus project will be documented in this file.
 
 ## [Unreleased]
 ### Changed
+- **Micro-optimization (Topology)**: 
+    - Refactored `src/topology.py` to use `rdMolTransforms` for bond length and angle calculations, replacing manual NumPy-based geometric logic with optimized C++ routines.
+    - Removed dead code (`get_bond_type`) and hoisted `itertools` import to the top level for better performance.
+    - Improved dihedral detection efficiency by pruning redundant calculations in nested loops.
 - **Archived AI Module**: The entire machine learning and AI property prediction suite has been moved to `archive/ai/`.
     - Removed `src/ml/` (Dataset, Model, Training, Prediction logic).
     - Removed `models/` (Pre-trained ChemBERTa model weights).

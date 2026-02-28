@@ -4,9 +4,10 @@ Responsible for converting chemical information (SMILES) into physical topology 
 """
 
 import sys
+import itertools
 from pathlib import Path
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdMolTransforms
 import numpy as np
 
 def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
@@ -38,13 +39,6 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
     element_map = {'C': 1, 'H': 2, 'O': 3, 'N': 4, 'S': 5}
     mass_map = {1: 12.011, 2: 1.008, 3: 15.999, 4: 14.007, 5: 32.06}
     
-    def get_bond_type(bond):
-        bt = bond.GetBondType()
-        if bt == Chem.rdchem.BondType.SINGLE: return 1
-        if bt == Chem.rdchem.BondType.DOUBLE: return 2
-        if bt == Chem.rdchem.BondType.TRIPLE: return 3
-        return 4
-
     # Bond and Angle definitions
     unique_bonds = {} # (type_id) -> (k, r0)
     bond_params_map = {} # (rounded_r0, type) -> type_id
@@ -88,12 +82,11 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
             })
             
         for bond in mol.GetBonds():
-            # Calculate actual length in optimized structure
             a1_idx = bond.GetBeginAtomIdx()
             a2_idx = bond.GetEndAtomIdx()
-            p1 = conf.GetAtomPosition(a1_idx)
-            p2 = conf.GetAtomPosition(a2_idx)
-            r0 = np.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2 + (p1.z-p2.z)**2)
+            
+            # Optimized Bond Length Calculation
+            r0 = rdMolTransforms.GetBondLength(conf, a1_idx, a2_idx)
             r0_rounded = round(r0, 2)
             
             bt = bond.GetBondType()
@@ -119,52 +112,38 @@ def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
             neigh1 = [n.GetIdx() for n in mol.GetAtomWithIdx(a1_idx).GetNeighbors() if n.GetIdx() != a2_idx]
             neigh2 = [n.GetIdx() for n in mol.GetAtomWithIdx(a2_idx).GetNeighbors() if n.GetIdx() != a1_idx]
             
-            for n1 in neigh1:
-                for n2 in neigh2:
-                    if n1 == n2: continue
-                    
-                    # Heuristic parameters for CHONS
-                    # Double bond -> planar (n=2, d=-1), Single bond -> staggered (n=3, d=1)
-                    if bt == Chem.rdchem.BondType.DOUBLE:
-                        k_di = 10.0
-                        d_di = -1
-                        n_di = 2
-                    else:
-                        k_di = 1.0
-                        d_di = 1
-                        n_di = 3
-                    
-                    di_key = (k_di, d_di, n_di)
-                    if di_key not in dihedral_params_map:
-                        type_id = len(dihedral_params_map) + 1
-                        dihedral_params_map[di_key] = type_id
-                        unique_dihedrals[type_id] = di_key
-                    
-                    total_dihedrals.append({
-                        'type': dihedral_params_map[di_key],
-                        'a1': n1 + atom_offset + 1,
-                        'a2': a1_idx + atom_offset + 1,
-                        'a3': a2_idx + atom_offset + 1,
-                        'a4': n2 + atom_offset + 1
-                    })
+            if neigh1 and neigh2:
+                # Heuristic parameters for CHONS
+                if bt == Chem.rdchem.BondType.DOUBLE:
+                    k_di, d_di, n_di = 10.0, -1, 2
+                else:
+                    k_di, d_di, n_di = 1.0, 1, 3
+                
+                di_key = (k_di, d_di, n_di)
+                if di_key not in dihedral_params_map:
+                    type_id = len(dihedral_params_map) + 1
+                    dihedral_params_map[di_key] = type_id
+                    unique_dihedrals[type_id] = di_key
+                
+                for n1 in neigh1:
+                    for n2 in neigh2:
+                        if n1 == n2: continue
+                        total_dihedrals.append({
+                            'type': dihedral_params_map[di_key],
+                            'a1': n1 + atom_offset + 1,
+                            'a2': a1_idx + atom_offset + 1,
+                            'a3': a2_idx + atom_offset + 1,
+                            'a4': n2 + atom_offset + 1
+                        })
             
         # Detect Angles
         for atom in mol.GetAtoms():
             idx = atom.GetIdx()
             neighbors = [n.GetIdx() for n in atom.GetNeighbors()]
             if len(neighbors) >= 2:
-                import itertools
                 for a1, a2 in itertools.combinations(neighbors, 2):
-                    # Calculate angle
-                    p_c = conf.GetAtomPosition(idx)
-                    p1 = conf.GetAtomPosition(a1)
-                    p2 = conf.GetAtomPosition(a2)
-                    
-                    v1 = np.array([p1.x-p_c.x, p1.y-p_c.y, p1.z-p_c.z])
-                    v2 = np.array([p2.x-p_c.x, p2.y-p_c.y, p2.z-p_c.z])
-                    
-                    cos_theta = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-                    theta0 = np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0)))
+                    # Optimized Angle Calculation
+                    theta0 = rdMolTransforms.GetAngleDeg(conf, a1, idx, a2)
                     theta0_rounded = round(theta0, 1)
                     
                     if theta0_rounded not in angle_params_map:
