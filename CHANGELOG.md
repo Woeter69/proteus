@@ -3,6 +3,11 @@
 All notable changes to the Proteus project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- **Micro-optimization Sprint (Complete)**:
+    - **Simulation (`src/simulation.py`)**: Hoisted forcefield constants, optimized input generation with list joining, and implemented streaming `stdout` via `subprocess.Popen` to prevent memory bloat. Added configurable GPU scaling support.
+    - **Analysis (`src/analysis.py`)**: Refactored log and dump parsing to use memory-efficient seeking and line-by-line reading. Can now handle multi-gigabyte trajectories without memory exhaustion.
+    - **Visualization (`src/visualization.py`)**: Implemented element-specific Van der Waals radii (CHONS) and dynamic frame sampling to ensure high-quality, concise animations with significantly reduced render times.
 ### Changed
 - **Micro-optimization (Topology)**: 
     - Refactored `src/topology.py` to use `rdMolTransforms` for bond length and angle calculations, replacing manual NumPy-based geometric logic with optimized C++ routines.

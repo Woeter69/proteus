@@ -20,6 +20,7 @@ This document serves as the single source of truth for all configurable variable
 | `--timestep` | `timestep` | `1.0` | **Time Step (fs)**. Resolution of the simulation integration. |
 | `--padding` | `padding` | `20.0` | **Padding (Å)**. Extra space around molecules to determine Simulation Box size. |
 | `--steps` | `steps` | `10000` | **Total Simulation Time**. Total number of integration steps to run. |
+| `--gpus` | `gpus` | `1` | **GPU Scaling**. Number of GPUs to use for the simulation run. |
 
 ### Internal Optimizations (Hardcoded)
 - **Neighbor Frequency**: `every 10`. Optimized for performance on GPU builds.
