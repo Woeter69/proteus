@@ -1,0 +1,4 @@
+name,rg,efficiency,smiles,output_dir
+Batch_Encapsulation,21.01068,80.0,CCOCCO,/mnt/d_drive/programs/proteus/output/Batch_Encapsulation
+Batch_Ethanol,1.180915,,CCO,/mnt/d_drive/programs/proteus/output/Batch_Ethanol
+Batch_Propanol,1.4414213,,CCCO,/mnt/d_drive/programs/proteus/output/Batch_Propanol

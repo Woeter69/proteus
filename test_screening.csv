@@ -1,0 +1,4 @@
+name,smiles,count,payload,payload_count,steps
+Batch_Ethanol,CCO,1,,0,1000
+Batch_Propanol,CCCO,1,,0,1000
+Batch_Encapsulation,CCOCCO,5,O,10,2000
