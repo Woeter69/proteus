@@ -23,17 +23,7 @@ def moving_average(data, window_size):
 def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int = 1, payload_count: int = 0, dump_path: Path = None):
     """
     Parses the LAMMPS log file to find physical metrics and optionally generates a stability plot.
-    If payload/dump info is provided, calculates encapsulation efficiency.
-
-    Args:
-        log_path (Path): Path to the LAMMPS log file.
-        output_plot (Path, optional): Path to save the stability plot.
-        polymer_count (int): Number of polymer molecules.
-        payload_count (int): Number of payload molecules.
-        dump_path (Path): Path to the trajectory dump file.
-    
-    Returns:
-        dict: Analysis results containing Rg and Efficiency.
+    Memory-efficient: reads line-by-line.
     """
     print(f"[*] Analyzing results from {log_path}")
     
@@ -45,52 +35,51 @@ def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int
         
     print(f"[*] Parsing log file: {log_path.name}")
 
-    steps = []
-    rg_values = []
-    temp_values = []
-    energy_values = []
+    steps, rg_values, temp_values, energy_values = [], [], [], []
     
     try:
-        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-            lines = f.readlines()
-            
-        # Find the LAST run's thermo data section
-        last_step_idx = -1
+        # Step 1: Find the start of the LAST run section and its headers
+        last_run_start_byte = 0
+        headers = []
         col_map = {}
+
+        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+            while True:
+                line = f.readline()
+                if not line: break
+                if line.strip().startswith("Step") and "c_rg" in line:
+                    last_run_start_byte = f.tell() - len(line)
+                    headers = line.strip().split()
+                    col_map = {h: idx for idx, h in enumerate(headers)}
         
-        for i, line in enumerate(lines):
-            if line.strip().startswith("Step") and "c_rg" in line:
-                last_step_idx = i
-                headers = line.strip().split()
-                col_map = {h: idx for idx, h in enumerate(headers)}
-        
-        if last_step_idx == -1:
+        if not col_map:
              print("Error: Could not find thermo output with c_rg in log.")
              return results
 
         rg_col = col_map.get("c_rg")
         temp_col = col_map.get("Temp")
-        energy_col = col_map.get("PotEng") or col_map.get("E_pair") # Proteus uses epair in thermo_style
+        energy_col = col_map.get("PotEng") or col_map.get("epair") or col_map.get("E_pair")
 
-        for line in lines[last_step_idx+1:]:
-            tokens = line.strip().split()
-            if not tokens: continue
+        # Step 2: Parse data from the last run section only
+        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+            f.seek(last_run_start_byte)
+            f.readline() # Skip header
             
-            if tokens[0].replace('.', '', 1).isdigit():
-                try:
-                    step = int(tokens[0])
-                    rg = float(tokens[rg_col])
-                    temp = float(tokens[temp_col])
-                    energy = float(tokens[energy_col])
-                    
-                    steps.append(step)
-                    rg_values.append(rg)
-                    temp_values.append(temp)
-                    energy_values.append(energy)
-                except (ValueError, IndexError):
-                    pass
-            elif "Loop time" in line:
-                break
+            for line in f:
+                tokens = line.strip().split()
+                if not tokens: continue
+                
+                # Check if first token is an integer (Step)
+                if tokens[0].isdigit():
+                    try:
+                        steps.append(int(tokens[0]))
+                        rg_values.append(float(tokens[rg_col]))
+                        temp_values.append(float(tokens[temp_col]))
+                        energy_values.append(float(tokens[energy_col]))
+                    except (ValueError, IndexError):
+                        pass
+                elif "Loop time" in line:
+                    break
                 
         if not rg_values:
             print("Warning: No data extraction.")
@@ -99,38 +88,32 @@ def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int
             print(f"[*] Final Radius of Gyration (Rg): {results['rg']:.4f} Angstroms")
 
         # Generate stability plot if requested and possible
-        if output_plot and steps:
-            if not PLOT_AVAILABLE:
-                print("[!] Matplotlib/Numpy not found. Skipping stability plot.")
-            else:
-                print(f"[*] Generating stability plot: {output_plot.name}")
-                
-                # Smooth data if we have many points
-                window = max(1, len(steps) // 50)
-                s_steps = steps[window-1:]
-                s_temp = moving_average(temp_values, window)
-                s_energy = moving_average(energy_values, window)
+        if output_plot and steps and PLOT_AVAILABLE:
+            print(f"[*] Generating stability plot: {output_plot.name}")
+            window = max(1, len(steps) // 50)
+            s_steps = steps[window-1:]
+            s_temp = moving_average(temp_values, window)
+            s_energy = moving_average(energy_values, window)
 
-                fig, ax1 = plt.subplots(figsize=(10, 6))
+            fig, ax1 = plt.subplots(figsize=(10, 6))
+            color = 'tab:red'
+            ax1.set_xlabel('Step')
+            ax1.set_ylabel('Temperature (K)', color=color)
+            ax1.plot(steps, temp_values, color=color, alpha=0.2)
+            ax1.plot(s_steps, s_temp, color=color, linewidth=2, label='Temp (MA)')
+            ax1.tick_params(axis='y', labelcolor=color)
 
-                color = 'tab:red'
-                ax1.set_xlabel('Step')
-                ax1.set_ylabel('Temperature (K)', color=color)
-                ax1.plot(steps, temp_values, color=color, alpha=0.2) # Raw data faint
-                ax1.plot(s_steps, s_temp, color=color, linewidth=2, label='Temp (MA)')
-                ax1.tick_params(axis='y', labelcolor=color)
+            ax2 = ax1.twinx()
+            color = 'tab:blue'
+            ax2.set_ylabel('Potential Energy (kcal/mol)', color=color)
+            ax2.plot(steps, energy_values, color=color, alpha=0.2)
+            ax2.plot(s_steps, s_energy, color=color, linewidth=2, label='Energy (MA)')
+            ax2.tick_params(axis='y', labelcolor=color)
 
-                ax2 = ax1.twinx()
-                color = 'tab:blue'
-                ax2.set_ylabel('Potential Energy (kcal/mol)', color=color)
-                ax2.plot(steps, energy_values, color=color, alpha=0.2) # Raw data faint
-                ax2.plot(s_steps, s_energy, color=color, linewidth=2, label='Energy (MA)')
-                ax2.tick_params(axis='y', labelcolor=color)
-
-                plt.title(f'System Equilibrium Stability (Smoothing Window: {window})')
-                fig.tight_layout()
-                plt.savefig(output_plot)
-                plt.close()
+            plt.title(f'System Equilibrium Stability (Smoothing Window: {window})')
+            fig.tight_layout()
+            plt.savefig(output_plot)
+            plt.close()
 
         # Phase 3: Encapsulation Efficiency
         if payload_count > 0 and dump_path and dump_path.exists():
@@ -143,70 +126,101 @@ def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int
 
     except Exception as e:
         print(f"Error analyzing log file: {e}")
+        import traceback
+        traceback.print_exc()
         return results
 
 def calculate_encapsulation_efficiency(dump_path: Path, polymer_count: int, payload_count: int, rg: float):
     """
-    Parses the LAST frame of the trajectory dump to see if payload molecules are within the polymer cluster.
+    Parses the LAST frame of the trajectory dump without reading the whole file.
+    Dynamically calculates buffer size based on the number of atoms in the system.
     """
     try:
-        with open(dump_path, 'r') as f:
-            lines = f.readlines()
-            
-        # Find start of the last frame
-        last_frame_start = -1
-        for i in range(len(lines)-1, -1, -1):
-            if "ITEM: ATOMS" in lines[i]:
-                last_frame_start = i
-                break
+        filesize = dump_path.stat().st_size
+        if filesize == 0: return 0.0
+
+        # 1. Read the first ~2KB to find the total number of atoms
+        num_atoms = 0
+        with open(dump_path, 'r', encoding='utf-8', errors='replace') as f:
+            for _ in range(20): # Atom count is usually in the first 10 lines
+                line = f.readline()
+                if not line: break
+                if "ITEM: NUMBER OF ATOMS" in line:
+                    num_atoms = int(f.readline().strip())
+                    break
         
-        if last_frame_start == -1:
-            return 0.0
+        if num_atoms == 0:
+            print("[!] Warning: Could not determine atom count from dump header.")
+            num_atoms = 10000 # Fallback
             
-        header = lines[last_frame_start].strip().split()
-        col_map = {h: idx-2 for idx, h in enumerate(header)} # -2 because "ITEM:" and "ATOMS" are prefix
+        # 2. Estimate buffer size: ~100 bytes per atom line + 500 bytes header
+        # We read 1.5x the estimated frame size to ensure we catch the last 'ITEM: ATOMS'
+        estimated_frame_size = num_atoms * 100 + 500
+        buffer_size = min(filesize, int(estimated_frame_size * 1.5))
         
-        mol_col = col_map.get("mol")
-        x_col = col_map.get("x")
-        y_col = col_map.get("y")
-        z_col = col_map.get("z")
-        
-        polymer_atoms = []
-        payload_mols = {m: [] for m in range(polymer_count + 1, polymer_count + payload_count + 1)}
-        
-        for line in lines[last_frame_start+1:]:
-            tokens = line.strip().split()
-            if not tokens: continue
+        with open(dump_path, 'rb') as f:
+            f.seek(filesize - buffer_size)
+            chunk = f.read(buffer_size).decode('utf-8', errors='replace')
             
-            mol_id = int(tokens[mol_col])
-            pos = np.array([float(tokens[x_col]), float(tokens[y_col]), float(tokens[z_col])])
+            lines = chunk.splitlines()
+            last_atoms_idx = -1
+            # Search backwards for the LAST frame start
+            for i in range(len(lines)-1, -1, -1):
+                if "ITEM: ATOMS" in lines[i]:
+                    last_atoms_idx = i
+                    break
             
-            if mol_id <= polymer_count:
-                polymer_atoms.append(pos)
-            elif mol_id in payload_mols:
-                payload_mols[mol_id].append(pos)
+            if last_atoms_idx == -1:
+                print(f"[!] Warning: Could not find last frame in trailing {buffer_size/1024:.1f}KB.")
+                return 0.0
+            
+            header = lines[last_atoms_idx].strip().split()
+            # ITEM: ATOMS id mol type x y z ...
+            col_map = {h: idx-2 for idx, h in enumerate(header)}
+            
+            mol_col = col_map.get("mol")
+            x_col = col_map.get("x")
+            y_col = col_map.get("y")
+            z_col = col_map.get("z")
+            
+            polymer_atoms = []
+            payload_mols = {m: [] for m in range(polymer_count + 1, polymer_count + payload_count + 1)}
+            
+            for line in lines[last_atoms_idx+1:]:
+                tokens = line.strip().split()
+                if not tokens or len(tokens) < 5: continue
+                if "ITEM:" in tokens[0]: break # Next frame or section
                 
-        if not polymer_atoms:
-            return 0.0
-            
-        polymer_atoms = np.array(polymer_atoms)
-        polymer_com = np.mean(polymer_atoms, axis=0)
-        
-        # Heuristic: Encapsulated if payload COM is within 1.5 * Rg of polymer COM
-        # We use 1.5 because Rg is the root-mean-square distance, the actual volume is larger.
-        encapsulated_count = 0
-        threshold = 1.5 * rg
-        
-        for mol_id, atoms in payload_mols.items():
-            if not atoms: continue
-            payload_com = np.mean(np.array(atoms), axis=0)
-            dist = np.linalg.norm(payload_com - polymer_com)
-            
-            if dist <= threshold:
-                encapsulated_count += 1
+                try:
+                    mol_id = int(tokens[mol_col])
+                    pos = [float(tokens[x_col]), float(tokens[y_col]), float(tokens[z_col])]
+                    
+                    if mol_id <= polymer_count:
+                        polymer_atoms.append(pos)
+                    elif mol_id in payload_mols:
+                        payload_mols[mol_id].append(pos)
+                except (ValueError, IndexError):
+                    continue
+                    
+            if not polymer_atoms:
+                print("[!] Warning: No polymer atoms found in last frame.")
+                return 0.0
                 
-        return (encapsulated_count / payload_count) * 100.0
-        
+            p_atoms_np = np.array(polymer_atoms)
+            polymer_com = np.mean(p_atoms_np, axis=0)
+            
+            encapsulated_count = 0
+            threshold = 1.5 * rg
+            
+            for mol_id, atoms in payload_mols.items():
+                if not atoms: continue
+                payload_com = np.mean(np.array(atoms), axis=0)
+                dist = np.linalg.norm(payload_com - polymer_com)
+                if dist <= threshold:
+                    encapsulated_count += 1
+                    
+            return (encapsulated_count / payload_count) * 100.0 if payload_count > 0 else 0.0
+            
     except Exception as e:
         print(f"Error calculating efficiency: {e}")
         return 0.0
