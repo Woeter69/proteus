@@ -21,9 +21,10 @@ except ImportError as e:
     OVITO_AVAILABLE = False
     IMPORT_ERROR = e
 
-def render_trajectory(dump_path: Path, output_gif: Path):
+def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50):
     """
     Renders the trajectory.dump file into a GIF animation using Ovito.
+    Includes element-specific radii and frame sampling for efficiency.
     """
     print(f"[*] Visualization Module Invoked for: {dump_path}")
     
@@ -49,42 +50,54 @@ def render_trajectory(dump_path: Path, output_gif: Path):
             print("Warning: Trajectory has 0 frames. Nothing to render.")
             return
 
-        # 2. visual settings
-        # Ambient Occlusion is expensive on CPU, but fast on GPU if supported
-        pipeline.modifiers.append(AmbientOcclusionModifier(intensity=0.3))
+        # 2. Visual settings & Element Radii (VdW-ish)
+        # 1:C, 2:H, 3:O, 4:N, 5:S
+        radii_map = {1: 1.7, 2: 1.2, 3: 1.5, 4: 1.55, 5: 1.8}
         
-        try:
-            pipeline.modifiers.append(ColorCodingModifier(property='Molecule Identifier'))
-        except Exception:
-            pass
+        def setup_particles(frame, data):
+            types = data.particles.particle_types
+            for t_id, radius in radii_map.items():
+                if t_id <= len(types):
+                    types.type_by_id(t_id).radius = radius
+        
+        pipeline.modifiers.append(setup_particles)
+
+        # Ambient Occlusion for depth
+        pipeline.modifiers.append(AmbientOcclusionModifier(intensity=0.4, radius=5.0))
+        
+        # Color by Molecule ID to distinguish polymer from payload
+        pipeline.modifiers.append(ColorCodingModifier(property='Molecule Identifier', start_value=1, end_value=10))
 
         # 3. Setup Camera/Viewport
         vp = Viewport()
         vp.type = Viewport.Type.Perspective
         vp.zoom_all()
         
-        # 4. Render Animation
-        print("[*] Starting render... (Trying GPU/OpenGL acceleration)")
+        # 4. Frame Sampling Logic
+        # If we have 500 frames but max_frames is 50, we render every 10th frame
+        every_nth = max(1, num_frames // max_frames)
+        render_frames = list(range(0, num_frames, every_nth))
+        
+        print(f"[*] Rendering {len(render_frames)} sampled frames (every {every_nth}th frame).")
+
+        # 5. Render Animation
+        render_args = {
+            "filename": str(output_gif),
+            "size": (800, 600),
+            "range": (render_frames[0], render_frames[-1]),
+            "every_nth": every_nth,
+            "fps": 10
+        }
         
         try:
             # Try GPU Renderer first
-            vp.render_anim(
-                filename=str(output_gif),
-                size=(800, 600),
-                fps=10,
-                renderer=OpenGLRenderer()
-            )
+            print("[*] Attempting GPU (OpenGL) rendering...")
+            vp.render_anim(renderer=OpenGLRenderer(), **render_args)
             print("[*] GPU Rendering finished.")
-            
         except Exception as e:
             print(f"Warning: GPU Rendering failed ({e}). Falling back to CPU Raytracing...")
             # Fallback to CPU Tachyon
-            vp.render_anim(
-                filename=str(output_gif),
-                size=(800, 600),
-                fps=10,
-                renderer=TachyonRenderer(antialiasing_samples=1)
-            )
+            vp.render_anim(renderer=TachyonRenderer(antialiasing_samples=1), **render_args)
             print("[*] CPU Rendering finished.")
         
         print(f"[*] Visualization saved successfully: {output_gif}")
