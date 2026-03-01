@@ -6,11 +6,21 @@ Main Controller
 import argparse
 import sys
 from pathlib import Path
+from rdkit import Chem
 
-# Add src to python path if needed, though local import usually works if running from root
+# Add src to python path if needed
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src import topology, simulation, analysis, visualization
+
+def validate_smiles(smiles: str, label: str = "Molecule"):
+    """Validates a SMILES string using RDKit."""
+    if not smiles: return None
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        print(f"Error: Invalid {label} SMILES: {smiles}")
+        sys.exit(1)
+    return smiles
 
 def main():
     parser = argparse.ArgumentParser(description="Proteus: Polymer Nanoprecipitation Simulator")
@@ -31,8 +41,9 @@ def main():
     parser.add_argument("--sigma", type=float, default=None, help="LJ Sigma (particle size). Defaults to OPLS-AA.")
     parser.add_argument("--timestep", type=float, default=1.0, help="Simulation timestep (fs)")
     parser.add_argument("--padding", type=float, default=20.0, help="Simulation box padding (Angstroms)")
+    parser.add_argument("--gpus", type=int, default=1, help="Number of GPUs to use for simulation")
 
-    parser.add_argument("--version", action="version", version="%(prog)s v1.0.0")
+    parser.add_argument("--version", action="version", version="%(prog)s v1.0.1")
     
     args = parser.parse_args()
 
@@ -40,85 +51,72 @@ def main():
         parser.print_help()
         sys.exit(1)
     
-    # Handle Molecule Count
-    monomer_smiles = ".".join([args.smiles] * args.count)
+    # 0. Validation & Input Prep
+    validate_smiles(args.smiles, "Polymer")
+    validate_smiles(args.payload, "Payload")
     
-    # Handle Payload
-    if args.payload:
-        print(f"[*] Adding Payload: {args.payload} (x{args.payload_count})")
-        payload_smiles = ".".join([args.payload] * args.payload_count)
-        args.smiles = f"{monomer_smiles}.{payload_smiles}"
-    else:
-        args.smiles = monomer_smiles
+    # Construct final system SMILES
+    polymer_list = [args.smiles] * args.count
+    payload_list = [args.payload] * args.payload_count if args.payload else []
+    system_smiles = ".".join(polymer_list + payload_list)
     
     # Setup Paths
-    base_dir = Path(__file__).parent
-    output_dir = base_dir / "output" / args.name
+    output_dir = Path(__file__).parent / "output" / args.name
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    data_file = output_dir / "polymer.data"
-    input_file = output_dir / "simulation.in"
-    log_file = output_dir / "simulation.log"
-    dump_file = output_dir / "trajectory.dump"
-    gif_file = output_dir / "animation.gif"
-    plot_file = output_dir / "stability.png"
+    paths = {
+        "data": output_dir / "polymer.data",
+        "input": output_dir / "simulation.in",
+        "log": output_dir / "simulation.log",
+        "dump": output_dir / "trajectory.dump",
+        "gif": output_dir / "animation.gif",
+        "plot": output_dir / "stability.png" if args.plot else None
+    }
     
-    print("=========================================")
+    print("=" * 40)
     print(f"Proteus Pipeline: {args.name}")
-    print("=========================================")
+    print(f"System: {args.count}x Polymer, {args.payload_count if args.payload else 0}x Payload")
+    print("=" * 40)
     
-    # 1. Topology
     try:
-        bond_params, angle_params, dihedral_params = topology.generate_topology(args.smiles, data_file, padding=args.padding)
-    except Exception as e:
-        print(f"Topology Generation Failed: {e}")
-        sys.exit(1)
+        # 1. Topology
+        print("[*] Phase 1: Topology Generation")
+        bond_p, angle_p, dihedral_p = topology.generate_topology(system_smiles, paths["data"], padding=args.padding)
         
-    # 2. Simulation Setup & Run
-    try:
+        # 2. Simulation
+        print("[*] Phase 2: LAMMPS Simulation")
         simulation.generate_input_file(
-            data_file, 
-            input_file, 
-            dump_file, 
-            steps=args.steps,
-            temp=args.temp,
-            damp=args.damp,
-            epsilon=args.epsilon,
-            sigma=args.sigma,
-            timestep=args.timestep,
-            bond_params=bond_params,
-            angle_params=angle_params,
-            dihedral_params=dihedral_params
+            paths["data"], paths["input"], paths["dump"], 
+            steps=args.steps, temp=args.temp, damp=args.damp,
+            epsilon=args.epsilon, sigma=args.sigma, timestep=args.timestep,
+            bond_params=bond_p, angle_params=angle_p, dihedral_params=dihedral_p
         )
-        simulation.run_simulation(input_file, log_file)
-    except Exception as e:
-        print(f"Simulation Failed: {e}")
-        sys.exit(1)
+        simulation.run_simulation(paths["input"], paths["log"], gpus=args.gpus)
         
-    # 3. Analysis
-    try:
-        plot_path = plot_file if args.plot else None
+        # 3. Analysis
+        print("[*] Phase 3: Analytics")
         analysis.analyze_results(
-            log_file, 
-            output_plot=plot_path,
+            paths["log"], 
+            output_plot=paths["plot"],
             polymer_count=args.count,
             payload_count=args.payload_count if args.payload else 0,
-            dump_path=dump_file
+            dump_path=paths["dump"]
         )
+
+        # 4. Visualization (Optional)
+        if args.render:
+            print("[*] Phase 4: Visualization")
+            visualization.render_trajectory(dump_path=paths["dump"], output_gif=paths["gif"])
+
+        print("=" * 40)
+        print("Pipeline Finished Successfully.")
+        print(f"Results located in: {output_dir}")
+
     except Exception as e:
-        print(f"Analysis Failed: {e}")
+        print(f"\n[!] Pipeline Failed: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
-
-    # 4. Visualization (Optional)
-    if args.render:
-        try:
-            visualization.render_trajectory(dump_path=dump_file, output_gif=gif_file)
-        except Exception as e:
-            print(f"Visualization Failed: {e}")
-
-    print("=========================================")
-    print("Pipeline Finished Successfully.")
-    print(f"Results located in: {output_dir}")
 
 if __name__ == "__main__":
     main()
