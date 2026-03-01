@@ -11,6 +11,7 @@ This document serves as the single source of truth for all configurable variable
 | `--payload` | `payload` | `None` | SMILES string of the secondary "drug" or payload molecule. |
 | `--payload_count` | `payload_count` | `1` | Number of payload molecules to inject. |
 | `--name` | `name` | `simulation` | Name of the job (creates `output/<name>` directory). |
+| `--batch` | `batch` | `None` | Path to a CSV file for High-Throughput Screening. |
 
 ## Physics & Environment
 | Flag | Variable | Default | Description |
@@ -41,6 +42,7 @@ This document serves as the single source of truth for all configurable variable
 | :--- | :--- | :--- | :--- |
 | `--render` | `render` | `False` | If set, generates an animated GIF of the trajectory using Ovito. |
 | `--plot` | `plot` | `True` | Generates a stability plot (`stability.png`). Use `--no-plot` to disable. |
+| `--report` | `report` | `False` | Generates a professional PDF lab report (`lab_report.pdf`). |
 
 ## Standard Outputs
 | File | Description |
@@ -51,3 +53,4 @@ This document serves as the single source of truth for all configurable variable
 | `trajectory.dump` | Atom positions over time. |
 | `animation.gif` | Trajectory animation (if `--render` is used). |
 | `stability.png` | Graph showing Temperature and Potential Energy equilibrium. |
+| `lab_report.pdf` | Professional PDF summary (if `--report` is used). |

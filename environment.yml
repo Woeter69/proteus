@@ -20,3 +20,4 @@ dependencies:
     - ovito
     - fastapi-mail
     - psycopg2-binary
+    - reportlab
