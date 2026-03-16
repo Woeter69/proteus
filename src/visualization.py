@@ -55,10 +55,16 @@ def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50):
         radii_map = {1: 1.7, 2: 1.2, 3: 1.5, 4: 1.55, 5: 1.8}
         
         def setup_particles(frame, data):
-            types = data.particles.particle_types
+            # Request mutable access to particle types using the '_' notation
+            types = data.particles_.particle_types_
             for t_id, radius in radii_map.items():
-                if t_id <= len(types):
-                    types.type_by_id(t_id).radius = radius
+                # Check if this type ID exists in the data
+                try:
+                    ptype = types.type_by_id(t_id)
+                    ptype.radius = radius
+                except (IndexError, KeyError, RuntimeError):
+                    # Skip if type doesn't exist or isn't accessible
+                    continue
         
         pipeline.modifiers.append(setup_particles)
 

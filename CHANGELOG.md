@@ -49,6 +49,7 @@ All notable changes to the Proteus project will be documented in this file.
     - Differentiates between Single (n=3) and Double (n=2, planar) bonds for improved structural stability.
     - Updated `main.py` to pass dihedral parameters through the pipeline.
 ### Fixed
+- **Visualization (`src/visualization.py`)**: Fixed a `RuntimeError` (mutability) and `KeyError` (missing IDs) in the OVITO rendering pipeline by correctly using the mutable underscore notation (`_`) and robust error handling for particle types.
 - **System Stability**: Resolved excessive gyration and temperature fluctuations in small simulation boxes by constraining bond rotations with proper dihedrals.
 
 ## [Unreleased] - 2026-02-15
