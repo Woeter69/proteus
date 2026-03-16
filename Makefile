@@ -1,7 +1,8 @@
 .PHONY: up setup
 
 setup:
-	conda env update --file environment.yml --prune
+	uv venv venv
+	uv pip install -r requirements.txt
 
 up:
 	./platform/dev.sh

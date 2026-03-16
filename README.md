@@ -12,45 +12,30 @@
 
 ## Installation
 
-Proteus uses **Conda** to manage dependencies (Python, RDKit, LAMMPS, NumPy).
+Proteus uses **uv** for high-performance dependency management and virtual environment creation.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd proteus
-    ```
+### 1. Install uv
+If you don't have `uv` installed, you can install it using the following command (Linux/macOS):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+For other platforms or methods, refer to the [uv documentation](https://github.com/astral-sh/uv).
 
-2.  **Create the environment:**
-    ```bash
-    conda env create -f environment.yml
-    ```
+### 2. Clone the repository
+```bash
+git clone <repository-url>
+cd proteus
+```
 
-3.  **Install Visualization Engine (Optional but Recommended):**
-    ```bash
-    pip install ovito
-    ```
+### 3. Set up the environment with uv
+```bash
+make setup
+```
 
-## Database Configuration
-
-Proteus supports both **SQLite** (default, file-based) and **PostgreSQL** (production).
-
-### Using SQLite (Default)
-No setup required. The database is stored in `data/proteus.db`.
-
-### Using PostgreSQL (Recommended)
-1.  **Start the Database:**
-    ```bash
-    docker compose up -d
-    ```
-2.  **Configure Environment:**
-    Create a `.env` file in the root directory:
-    ```bash
-    DATABASE_URL=postgresql://proteus:proteus_password@localhost:5432/proteus_db
-    ```
-3.  **Update Environment:**
-    ```bash
-    conda env update -f environment.yml
-    ```
+### 4. Activate the environment
+```bash
+source venv/bin/activate
+```
 
 ## Usage
 
@@ -80,34 +65,15 @@ Results are saved in `output/<NAME>/`:
 *   `stability.png`: **Equilibrium graph** showing Temperature and Potential Energy over time.
 *   `trajectory.dump`: Raw atom positions (viewable in external tools like VMD/Ovito).
 
-## Web Platform
-
-Proteus includes a modern web interface for managing simulations, viewing results, and monitoring job queues.
-
-### Local Development
-```bash
-make up
-```
-This starts the **Next.js** frontend (port 3000), **FastAPI** backend (port 8000), and **Celery** worker.
-
-### Production (Docker)
-```bash
-docker compose -f platform/docker-compose.yml up -d
-docker build -f platform/Dockerfile -t proteus .
-docker run -p 8080:8080 proteus
-```
-
 ## Architecture
 
 1.  **Simulation Core (`src/`)**: 
     - **Topology Architect (`topology.py`)**: SMILES $\to$ 3D Topology via RDKit & UFF.
-    - **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity for smooth motion.
+    - **Simulation Engine (`simulation.py`)**: Langevin dynamics (300K) with tuned viscosity.
     - **Analytics (`analysis.py`)**: Log parsing and $R_g$ calculation.
     - **Visualization (`visualization.py`)**: Headless rendering of trajectories via Ovito.
-2.  **Web Platform (`platform/`)**:
-    - **Frontend**: Next.js 14+ application with 3D visualization.
-    - **Backend**: FastAPI with PostgreSQL and Redis.
-    - **Worker**: Celery task runner for simulation jobs.
+    - **Reporting (`report.py`)**: PDF report generation.
+    - **HTS (`hts.py`)**: High-Throughput Screening automation.
 
 ## Simulation Physics
 

@@ -35,12 +35,12 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-# Run training using the conda environment
+# Run training using the virtual environment
 echo "[*] Starting Proteus Training Pipeline..."
 echo "[*] Run Name: $NAME"
 echo "[*] Configuration: Epochs=$EPOCHS, Batch=$BATCH_SIZE, LR=$LR"
 
-conda run --no-capture-output -n proteus_env python -m src.ml.train \
+../../venv/bin/python -m src.ml.train \
     --epochs "$EPOCHS" \
     --batch_size "$BATCH_SIZE" \
     --lr "$LR" \

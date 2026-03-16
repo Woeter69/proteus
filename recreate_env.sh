@@ -1,4 +1,7 @@
 #!/bin/bash
-source /opt/anaconda/etc/profile.d/conda.sh
-conda env remove -n proteus_env -y
-conda env create -f environment.yml
+# Recreation script for the virtual environment using uv
+echo "Recreating virtual environment with uv..."
+rm -rf venv
+uv venv venv
+uv pip install -r requirements.txt
+echo "Environment recreated in venv"

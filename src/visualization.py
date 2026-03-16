@@ -63,7 +63,7 @@ def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50):
         pipeline.modifiers.append(setup_particles)
 
         # Ambient Occlusion for depth
-        pipeline.modifiers.append(AmbientOcclusionModifier(intensity=0.4, radius=5.0))
+        pipeline.modifiers.append(AmbientOcclusionModifier(intensity=0.4))
         
         # Color by Molecule ID to distinguish polymer from payload
         pipeline.modifiers.append(ColorCodingModifier(property='Molecule Identifier', start_value=1, end_value=10))

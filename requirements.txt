@@ -1,3 +1,6 @@
 numpy>=1.20.0
 rdkit>=2022.03.1
 matplotlib>=3.5.0
+ovito>=3.7.0
+reportlab>=3.6.0
+Pillow>=9.0.0

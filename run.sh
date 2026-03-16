@@ -15,7 +15,7 @@ fi
 # Check if first argument is a flag (Advanced Mode)
 if [[ "$1" == --* ]]; then
     echo "Running in Advanced Mode (Pass-through)..."
-    conda run --no-capture-output -n proteus_env python main.py "$@"
+    ./venv/bin/python main.py "$@"
 else
     # Legacy Mode with optional extras
     SMILES=$1
@@ -46,7 +46,7 @@ else
     echo "  Copies:  $COUNT"
     echo "  Extra Args: $@"
 
-    conda run --no-capture-output -n proteus_env python main.py \
+    ./venv/bin/python main.py \
         --smiles "$SMILES" \
         --name "$NAME" \
         --steps "$STEPS" \
