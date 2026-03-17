@@ -83,4 +83,4 @@ The simulation uses a **Generic Hydrophobic Interaction** model:
 *   **Viscosity**: Tuned damping for realistic drifting rather than high-frequency vibrations.
 
 
-## DO NOT USE CONDA EVER
+## CONCLUDING THE PROJECT FOR NOW
