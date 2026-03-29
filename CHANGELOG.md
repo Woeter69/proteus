@@ -28,21 +28,34 @@ All notable changes to the Proteus project will be documented in this file.
     - Tuned neighbor list update frequency (`every 10`) achieving a **30% performance speedup** in simulation loop times.
     - Increased minimization iterations to `1000` to ensure better structural stability for complex chains before dynamics.
 
-## [1.2.1] - 2026-03-28
-### Changed
-- Refactored High-Throughput Screening (HTS) to use a standard `--hts` flag in `main.py` instead of `--batch`.
-- Renamed internal HTS processing functions for better consistency (`run_batch` $\to$ `run_hts`).
-- Updated `run.sh` and `VARIABLES.md` to reflect the new HTS flag.
+## [1.2.2] - 2026-03-29
 
 ### Added
-- **Unit Testing Suite**: Integrated `pytest` and added a `make test` target. Created initial tests for `analysis.py`.
-- **HTS Error Logging**: Batch runs now generate `hts_errors.log` to help debug simulation failures.
-- **HTS Versioning**: Summary CSVs are now timestamped to prevent overwriting previous experiment results.
-- **Solvent Profiles**: Added `--solvent` flag with predefined profiles (`water`, `ethanol`, `dmso`) that automatically set optimal temperature and damping.
-- **Dynamic HTS Ranking**: Added `--rank-by` flag to allow users to prioritize results by either `efficiency` (default) or `rg`.
-- **Cross-Section Rendering**: Added `--cut` flag to render a 3D cross-section (clipping plane) of nanoparticles, enabling interior payload visualization.
-- **Interactive Reports (JSON)**: Added `--json` flag to generate machine-readable simulation data for external tool integration.
+- **Scientific Solvent Profiles**: New `--solvent` flag allows researchers to quickly set up standard environments.
+    - *How it works*: Automatically maps specific temperature (K) and Langevin damping (viscosity) values.
+    - *Usage*: `python main.py --smiles "CCO" --solvent water` (Options: `water`, `ethanol`, `dmso`).
+- **Dynamic HTS Ranking**: Added `--rank-by` to customize High-Throughput Screening results.
+    - *How it works*: Allows sorting the leaderboard by either compact folding (`rg`) or encapsulation success (`efficiency`).
+    - *Usage*: `python main.py --hts screening.csv --rank-by rg`.
+- **Cross-Section Visualization**: New `--cut` flag for interior inspection of nanoparticles.
+    - *How it works*: Applies a 3D clipping plane (SliceModifier) during rendering to reveal the "Payload" inside the polymer ball.
+    - *Usage*: `python main.py --render --cut`.
+- **Machine-Readable Reports**: New `--json` flag for data integration.
+    - *How it works*: Generates a `report.json` containing all physical metrics and timestamps for easy import into external analysis tools.
+    - *Usage*: `python main.py --json`.
+- **Developer Documentation Site**: Integrated `MkDocs` and `mkdocstrings`.
+    - *How it works*: Automatically extracts API references from the newly improved source code docstrings.
+    - *Usage*: Run `make docs` to launch the local documentation server.
 
+### Changed
+- **HTS Refactoring**: Standardized the screening interface by replacing the `--batch` flag with `--hts`.
+- **Improved HTS Diagnostics**: Batch runs now generate an `hts_errors.log` identifying exactly why specific SMILES strings failed.
+- **Result Versioning**: HTS summary files are now timestamped (e.g., `hts_summary_YYYYMMDD_HHMMSS.csv`) to prevent accidental data overwrites.
+- **Testing Infrastructure**: Added a dedicated `tests/` suite and a `make test` target using `pytest`.
+
+### Fixed
+- **NameError in main.py**: Resolved a bug where `datetime` was not imported, which prevented JSON report generation.
+- **HTS Argument Propagation**: Fixed a bug where `global_args` were not correctly passed to the ranking module.
 
 ## [1.2.0] - 2026-02-15
 ### Changed

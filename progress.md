@@ -2,9 +2,11 @@
 
 ## Current Focus
 - [x] **Engineering & Quality Assurance**: Implemented testing infrastructure, HTS error logging, and summary versioning.
+- [x] **Developer Documentation**: Generated comprehensive API documentation using MkDocs and improved all docstrings.
 - [x] **Micro-optimization Sprint**: Thoroughly analyzed and refined all core modules (`topology`, `simulation`, `analysis`, `visualization`) for maximum performance, memory efficiency, and visual quality.
 
 ## Completed Tasks
+- [x] **Documentation Site**: Created `MkDocs` configuration and generated API references for all modules.
 - [x] **Testing Suite**: Integrated `pytest` and created initial unit tests for `analysis.py`.
 - [x] **HTS Versioning**: Added timestamping to HTS output files and `hts_errors.log`.
 - [x] **Project Scaffolding**: Created directory structure (`src/`, `output/`, `templates/`).

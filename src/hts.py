@@ -10,8 +10,18 @@ from copy import deepcopy
 
 def run_hts(csv_path: str, global_args):
     """
-    Reads a CSV and runs the pipeline for each row.
-    CSV Format: name,smiles,count,payload,payload_count,steps
+    Orchestrates a High-Throughput Screening (HTS) campaign from a CSV dataset.
+
+    This module:
+    1. Reads a CSV file where each row defines a simulation (name, smiles, count, etc.).
+    2. Sequentially runs the full Proteus pipeline for each row.
+    3. Aggregates results into a list of physical metrics.
+    4. Automatically generates an 'hts_errors.log' if any simulations fail.
+    5. Passes results to 'rank_and_summarize' for final leaderboard generation.
+
+    Args:
+        csv_path (str): Path to the input CSV file.
+        global_args (argparse.Namespace): Global configuration from main.py.
     """
     from main import run_pipeline
     
@@ -66,15 +76,23 @@ def run_hts(csv_path: str, global_args):
             return
 
         # Rank Results
-        rank_and_summarize(results, csv_file.parent)
+        rank_and_summarize(results, csv_file.parent, global_args)
         
     except Exception as e:
         print(f"Error during HTS screening: {e}")
 
-def rank_and_summarize(results, output_dir: Path):
+def rank_and_summarize(results, output_dir: Path, global_args):
     """
-    Sorts results by Rg (folding stability) and encapsulation efficiency.
-    Generates a summary CSV.
+    Sorts and ranks simulation results based on user-defined priority.
+
+    The ranking uses a two-tier sort:
+    - If priority is 'efficiency': Primary = Encapsulation % (Desc), Secondary = Rg (Asc).
+    - If priority is 'rg': Primary = Rg (Asc), Secondary = Efficiency % (Desc).
+
+    Args:
+        results (list): List of dictionaries containing individual simulation results.
+        output_dir (Path): Directory to save the summary CSV.
+        global_args (argparse.Namespace): Contains 'rank_by' choice and other metadata.
     """
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

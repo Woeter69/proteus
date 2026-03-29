@@ -22,8 +22,25 @@ def moving_average(data, window_size):
 
 def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int = 1, payload_count: int = 0, dump_path: Path = None):
     """
-    Parses the LAMMPS log file to find physical metrics and optionally generates a stability plot.
-    Memory-efficient: reads line-by-line.
+    Parses the LAMMPS log file to extract thermodynamic data and computes physical metrics.
+
+    Key metrics extracted:
+    - Radius of Gyration (Rg): Measures the compacting/folding of the polymer.
+    - Potential Energy: Used to assess system equilibrium.
+    - Temperature: Verifies Langevin thermostat stability.
+    - Encapsulation Efficiency (optional): Requires a trajectory dump and payload_count > 0.
+
+    Args:
+        log_path (Path): Path to the LAMMPS 'simulation.log'.
+        output_plot (Path, optional): If provided, generates a PNG stability plot.
+        polymer_count (int): Number of polymer chains in the system.
+        payload_count (int): Number of payload/drug molecules injected.
+        dump_path (Path, optional): Path to trajectory.dump for efficiency calculation.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'rg' (float): Final Radius of Gyration in Angstroms.
+            - 'efficiency' (float or None): Encapsulation percentage (0-100).
     """
     print(f"[*] Analyzing results from {log_path}")
     
@@ -132,8 +149,22 @@ def analyze_results(log_path: Path, output_plot: Path = None, polymer_count: int
 
 def calculate_encapsulation_efficiency(dump_path: Path, polymer_count: int, payload_count: int, rg: float):
     """
-    Parses the LAST frame of the trajectory dump without reading the whole file.
-    Dynamically calculates buffer size based on the number of atoms in the system.
+    Computes the percentage of payload molecules trapped within the polymer's radius of gyration.
+
+    Algorithm:
+    1. Efficiently seeks to the end of the dump file to read only the LAST frame.
+    2. Calculates the Center of Mass (COM) of the polymer system.
+    3. Calculates the COM for each individual payload molecule.
+    4. A payload is 'encapsulated' if its COM is within 1.5 * Rg of the polymer COM.
+
+    Args:
+        dump_path (Path): Path to the LAMMPS custom dump file.
+        polymer_count (int): Number of polymer molecules.
+        payload_count (int): Number of payload molecules.
+        rg (float): The current Radius of Gyration of the polymer.
+
+    Returns:
+        float: Percentage of encapsulated payload molecules (0.0 to 100.0).
     """
     try:
         filesize = dump_path.stat().st_size

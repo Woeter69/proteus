@@ -23,8 +23,22 @@ except ImportError as e:
 
 def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50, cut: bool = False):
     """
-    Renders the trajectory.dump file into a GIF animation using Ovito.
-    Includes element-specific radii and frame sampling for efficiency.
+    Transforms a LAMMPS trajectory dump into a high-quality GIF animation.
+
+    Features:
+    - Element Mapping: Automatically assigns Van der Waals radii based on atom types (CHONS).
+    - Frame Sampling: Downsamples large trajectories to maintain a target frame count (default 50).
+    - GPU Acceleration: Attempts OpenGL rendering via 'OpenGLRenderer', falling back to CPU 'TachyonRenderer'.
+    - Cross-Sectioning: If 'cut' is True, applies a Z-axis clipping plane to reveal internal structures.
+
+    Args:
+        dump_path (Path): Path to the input trajectory.dump file.
+        output_gif (Path): Target destination for the animated GIF.
+        max_frames (int, optional): Maximum number of frames to include in the animation. Defaults to 50.
+        cut (bool, optional): Whether to apply a cross-section slice. Defaults to False.
+
+    Returns:
+        None: Renders and saves the GIF directly to disk.
     """
     print(f"[*] Visualization Module Invoked for: {dump_path}")
     

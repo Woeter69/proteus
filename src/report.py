@@ -13,7 +13,16 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from datetime import datetime
 
 def generate_2d_molecule(smiles: str, output_path: Path):
-    """Generates a clean 2D representation of the molecule."""
+    """
+    Renders a 2D skeletal structure of a molecule from a SMILES string.
+
+    Args:
+        smiles (str): The chemical structure in SMILES format.
+        output_path (Path): Path to save the PNG image.
+
+    Returns:
+        bool: True if successful, False otherwise.
+    """
     try:
         mol = Chem.MolFromSmiles(smiles)
         if mol:
@@ -34,7 +43,26 @@ def generate_report(
     plot_path: Path = None
 ):
     """
-    Creates a professional PDF report in the output directory.
+    Orchestrates the creation of a professional PDF 'Lab Notebook' summarizing a simulation.
+
+    Report Sections:
+    1. Molecular Composition (SMILES and 2D diagram).
+    2. Simulation Environment (Temperature, Force Field, Damping).
+    3. Physical Analytics (Radius of Gyration, Encapsulation Efficiency).
+    4. System Equilibrium (Potential Energy and Temperature plots).
+
+    Args:
+        output_dir (Path): The simulation run's output folder.
+        name (str): The name of the simulation experiment.
+        smiles (str): Primary SMILES string.
+        steps (int): Total duration in integration steps.
+        temp (float): Simulation temperature.
+        rg (float): Measured Radius of Gyration.
+        efficiency (float, optional): Encapsulation efficiency percentage.
+        plot_path (Path, optional): Path to the stability graph.
+
+    Returns:
+        None: Generates 'lab_report.pdf' in the output directory.
     """
     report_path = output_dir / "lab_report.pdf"
     mol_img_path = output_dir / "structure_2d.png"

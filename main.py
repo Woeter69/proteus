@@ -7,6 +7,7 @@ import argparse
 import sys
 import os
 from pathlib import Path
+from datetime import datetime
 from rdkit import Chem
 
 # Add src to python path if needed
