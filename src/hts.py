@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from copy import deepcopy
 
-def run_batch(csv_path: str, global_args):
+def run_hts(csv_path: str, global_args):
     """
     Reads a CSV and runs the pipeline for each row.
     CSV Format: name,smiles,count,payload,payload_count,steps
@@ -23,6 +23,7 @@ def run_batch(csv_path: str, global_args):
     print(f"[*] Starting High-Throughput Screening (HTS): {csv_path}")
     
     results = []
+    errors = []
     
     try:
         with open(csv_file, mode='r', encoding='utf-8') as f:
@@ -42,6 +43,7 @@ def run_batch(csv_path: str, global_args):
                 
                 if not run_args.smiles:
                     print(f"Skipping row: missing SMILES in {row}")
+                    errors.append(f"{run_args.name}: Missing SMILES")
                     continue
                 
                 try:
@@ -49,37 +51,50 @@ def run_batch(csv_path: str, global_args):
                     results.append(result)
                 except Exception as e:
                     print(f"[!] Run failed for {run_args.name}: {e}")
+                    errors.append(f"{run_args.name}: {e}")
                     continue
                     
+        # Log errors to file
+        if errors:
+            error_log = csv_file.parent / "hts_errors.log"
+            with open(error_log, "w") as f:
+                f.write("\n".join(errors))
+            print(f"[!] HTS Errors logged to: {error_log.name}")
+
         if not results:
-            print("No simulations completed successfully in batch.")
+            print("No simulations completed successfully in HTS run.")
             return
 
         # Rank Results
         rank_and_summarize(results, csv_file.parent)
         
     except Exception as e:
-        print(f"Error during HTS batch run: {e}")
+        print(f"Error during HTS screening: {e}")
 
 def rank_and_summarize(results, output_dir: Path):
     """
     Sorts results by Rg (folding stability) and encapsulation efficiency.
     Generates a summary CSV.
     """
-    summary_path = output_dir / "hts_ranking_summary.csv"
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    summary_path = output_dir / f"hts_summary_{timestamp}.csv"
     
     print(f"[*] Ranking {len(results)} results...")
     
-    # Ranking logic: 
-    # 1. Primary: Encapsulation Efficiency (Descending)
-    # 2. Secondary: Radius of Gyration (Ascending - tighter folding is often better)
-    
-    # Sort: Efficiency (highest first), then Rg (smallest first)
-    # Note: Efficiency might be None, so we treat None as 0.0
-    ranked = sorted(
-        results, 
-        key=lambda x: (-(x.get('efficiency') or 0.0), x['rg'])
-    )
+    # Ranking logic
+    if global_args.rank_by == "efficiency":
+        # Primary: Efficiency (Desc), Secondary: Rg (Asc)
+        ranked = sorted(
+            results, 
+            key=lambda x: (-(x.get('efficiency') or 0.0), x['rg'])
+        )
+    else:
+        # Primary: Rg (Asc), Secondary: Efficiency (Desc)
+        ranked = sorted(
+            results, 
+            key=lambda x: (x['rg'], -(x.get('efficiency') or 0.0))
+        )
     
     # Save to CSV
     keys = ["name", "rg", "efficiency", "smiles", "output_dir"]

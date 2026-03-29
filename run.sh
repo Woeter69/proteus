@@ -7,6 +7,8 @@ if [ "$#" -eq 0 ]; then
     echo "Usage Legacy: $0 <SMILES> <NAME> [STEPS] [COUNT]"
     echo "Usage Advanced: $0 --smiles <SMILES> ... (Pass any main.py flags)"
     echo "New Variables available: --temp, --damp, --epsilon, --sigma, --timestep, --padding"
+    echo "HTS Screening: --hts <path_to_csv> --rank-by <rg|efficiency>"
+    echo "Solvent Profiles: --solvent <water|ethanol|dmso|custom>"
     echo "Payload Variables: --payload <SMILES>, --payload_count <N>"
     echo "Outputs: polymer.data, simulation.log, stability.png, (animation.gif if --render used)"
     exit 1

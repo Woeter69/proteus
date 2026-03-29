@@ -28,7 +28,23 @@ All notable changes to the Proteus project will be documented in this file.
     - Tuned neighbor list update frequency (`every 10`) achieving a **30% performance speedup** in simulation loop times.
     - Increased minimization iterations to `1000` to ensure better structural stability for complex chains before dynamics.
 
-## [1.4.0] - 2026-02-17
+## [1.2.1] - 2026-03-28
+### Changed
+- Refactored High-Throughput Screening (HTS) to use a standard `--hts` flag in `main.py` instead of `--batch`.
+- Renamed internal HTS processing functions for better consistency (`run_batch` $\to$ `run_hts`).
+- Updated `run.sh` and `VARIABLES.md` to reflect the new HTS flag.
+
+### Added
+- **Unit Testing Suite**: Integrated `pytest` and added a `make test` target. Created initial tests for `analysis.py`.
+- **HTS Error Logging**: Batch runs now generate `hts_errors.log` to help debug simulation failures.
+- **HTS Versioning**: Summary CSVs are now timestamped to prevent overwriting previous experiment results.
+- **Solvent Profiles**: Added `--solvent` flag with predefined profiles (`water`, `ethanol`, `dmso`) that automatically set optimal temperature and damping.
+- **Dynamic HTS Ranking**: Added `--rank-by` flag to allow users to prioritize results by either `efficiency` (default) or `rg`.
+- **Cross-Section Rendering**: Added `--cut` flag to render a 3D cross-section (clipping plane) of nanoparticles, enabling interior payload visualization.
+- **Interactive Reports (JSON)**: Added `--json` flag to generate machine-readable simulation data for external tool integration.
+
+
+## [1.2.0] - 2026-02-15
 ### Changed
 - **Project Restructuring**: 
     - Moved all web-related components (Frontend, Backend, Docker, Nginx) into a dedicated `platform/` directory for better separation of concerns between the CLI core and the Web UI.

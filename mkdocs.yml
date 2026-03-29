@@ -1,0 +1,30 @@
+site_name: Proteus Developer Documentation
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: indigo
+    accent: indigo
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+
+nav:
+  - Overview: index.md
+  - API Reference:
+      - Topology: api/topology.md
+      - Simulation: api/simulation.md
+      - Analysis: api/analysis.md
+      - HTS: api/hts.md
+      - Visualization: api/visualization.md
+      - Report: api/report.md
+  - Variables: variables.md

@@ -14,14 +14,14 @@ warnings.filterwarnings('ignore', message='.*OVITO.*PyPI')
 try:
     from ovito.io import import_file
     from ovito.vis import Viewport, TachyonRenderer, OpenGLRenderer
-    from ovito.modifiers import AmbientOcclusionModifier, ColorCodingModifier
+    from ovito.modifiers import AmbientOcclusionModifier, ColorCodingModifier, SliceModifier
     OVITO_AVAILABLE = True
     IMPORT_ERROR = None
 except ImportError as e:
     OVITO_AVAILABLE = False
     IMPORT_ERROR = e
 
-def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50):
+def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50, cut: bool = False):
     """
     Renders the trajectory.dump file into a GIF animation using Ovito.
     Includes element-specific radii and frame sampling for efficiency.
@@ -67,6 +67,12 @@ def render_trajectory(dump_path: Path, output_gif: Path, max_frames: int = 50):
                     continue
         
         pipeline.modifiers.append(setup_particles)
+
+        # Optional: Cross-section (Slice)
+        if cut:
+            print("[*] Applying SliceModifier for cross-section view.")
+            # Slice along the Z-axis at the center
+            pipeline.modifiers.append(SliceModifier(normal=(0, 0, 1), distance=0.0))
 
         # Ambient Occlusion for depth
         pipeline.modifiers.append(AmbientOcclusionModifier(intensity=0.4))

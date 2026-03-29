@@ -84,7 +84,7 @@ def run_pipeline(args):
     # 4. Visualization (Optional)
     if args.render:
         print("[*] Phase 4: Visualization")
-        visualization.render_trajectory(dump_path=paths["dump"], output_gif=paths["gif"])
+        visualization.render_trajectory(dump_path=paths["dump"], output_gif=paths["gif"], cut=args.cut)
 
     # 5. Automated Lab Notebook (Optional)
     if args.report:
@@ -99,6 +99,23 @@ def run_pipeline(args):
             efficiency=results.get("efficiency"),
             plot_path=paths["plot"]
         )
+    
+    if args.json:
+        print("[*] Generating JSON Report")
+        import json
+        json_path = output_dir / "report.json"
+        report_data = {
+            "name": args.name,
+            "smiles": args.smiles,
+            "steps": args.steps,
+            "temp": args.temp,
+            "rg": results["rg"],
+            "efficiency": results.get("efficiency"),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(json_path, "w") as f:
+            json.dump(report_data, f, indent=4)
+        print(f"[*] JSON report saved to: {json_path}")
 
     print("=" * 40)
     print(f"Pipeline Finished Successfully for: {args.name}")
@@ -122,24 +139,44 @@ def main():
     parser.add_argument("--plot", action="store_true", default=True, help="Generate a stability plot (default: True)")
     parser.add_argument("--no-plot", action="store_false", dest="plot", help="Disable stability plot generation")
     parser.add_argument("--report", action="store_true", help="Generate a professional PDF lab report")
-    parser.add_argument("--batch", type=str, default=None, help="Path to a CSV file for High-Throughput Screening")
+    parser.add_argument("--json", action="store_true", help="Generate a machine-readable JSON report")
+    parser.add_argument("--hts", type=str, default=None, help="Path to a CSV file for High-Throughput Screening")
+    parser.add_argument("--rank-by", type=str, choices=["rg", "efficiency"], default="efficiency", help="HTS ranking priority (default: efficiency)")
+    parser.add_argument("--solvent", type=str, choices=["water", "ethanol", "dmso", "custom"], default="custom", help="Predefined solvent profiles (sets temp/damp)")
     
     # Advanced Physics Parameters
-    parser.add_argument("--temp", type=float, default=300.0, help="Temperature (K)")
-    parser.add_argument("--damp", type=float, default=20.0, help="Langevin damping parameter (fs). Lower = higher viscosity.")
+    parser.add_argument("--temp", type=float, default=None, help="Temperature (K)")
+    parser.add_argument("--damp", type=float, default=None, help="Langevin damping parameter (fs). Lower = higher viscosity.")
     parser.add_argument("--epsilon", type=float, default=None, help="LJ Epsilon (interaction strength). Defaults to OPLS-AA.")
     parser.add_argument("--sigma", type=float, default=None, help="LJ Sigma (particle size). Defaults to OPLS-AA.")
     parser.add_argument("--timestep", type=float, default=1.0, help="Simulation timestep (fs)")
     parser.add_argument("--padding", type=float, default=20.0, help="Simulation box padding (Angstroms)")
     parser.add_argument("--gpus", type=int, default=1, help="Number of GPUs to use for simulation")
+    parser.add_argument("--cut", action="store_true", help="Render a cross-section (clipping plane) of the nanoparticle")
 
-    parser.add_argument("--version", action="version", version="%(prog)s v1.2.0")
+    parser.add_argument("--version", action="version", version="%(prog)s v1.2.1")
     
     args = parser.parse_args()
 
-    if args.batch:
+    # Predefined Solvent Profiles
+    solvent_profiles = {
+        "water": {"temp": 298.15, "damp": 50.0},
+        "ethanol": {"temp": 298.15, "damp": 20.0},
+        "dmso": {"temp": 310.15, "damp": 100.0}
+    }
+
+    if args.solvent != "custom":
+        profile = solvent_profiles[args.solvent]
+        if args.temp is None: args.temp = profile["temp"]
+        if args.damp is None: args.damp = profile["damp"]
+    else:
+        # Default custom values if not provided
+        if args.temp is None: args.temp = 300.0
+        if args.damp is None: args.damp = 20.0
+
+    if args.hts:
         from src import hts
-        hts.run_batch(args.batch, args)
+        hts.run_hts(args.hts, args)
         return
 
     if not args.smiles:

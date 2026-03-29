@@ -12,8 +12,31 @@ import numpy as np
 
 def generate_topology(smiles: str, output_path: Path, padding: float = 20.0):
     """
-    Generates a LAMMPS data file. 
-    Embeds each molecule individually and places them randomly.
+    Generates a LAMMPS-compliant data file from one or more SMILES strings.
+    
+    This architect performs the following steps:
+    1. Splits dot-separated SMILES into individual molecular chains.
+    2. Generates 3D coordinates using RDKit's ETKDGv3 embedding.
+    3. Optimizes geometry using the Universal Force Field (UFF).
+    4. Automatically detects bonds, angles, and proper dihedrals.
+    5. Maps atoms to a CHONS (Carbon, Hydrogen, Oxygen, Nitrogen, Sulfur) type system.
+    6. Randomly translates molecules within a calculated simulation box.
+    7. Writes a comprehensive LAMMPS 'data' file with all topology and force field coefficients.
+
+    Args:
+        smiles (str): SMILES string(s) to simulate. Use '.' as a separator for multiple molecules.
+        output_path (Path): Destination for the generated .data file.
+        padding (float, optional): Extra space (Angstroms) added to the simulation box. Defaults to 20.0.
+
+    Returns:
+        tuple: (bond_params, angle_params, dihedral_params)
+            - bond_params (dict): Mapping of bond type IDs to (k, r0) pairs.
+            - angle_params (dict): Mapping of angle type IDs to (k, theta0) pairs.
+            - dihedral_params (dict): Mapping of dihedral type IDs to (k, d, n) harmonic coefficients.
+
+    Raises:
+        ValueError: If an unsupported element (outside CHONS) is encountered.
+        SystemExit: If molecule generation fails completely.
     """
     print(f"[*] Generating topology for SMILES: {smiles}")
     
